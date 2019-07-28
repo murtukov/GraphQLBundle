@@ -135,35 +135,19 @@ abstract class TypeDefinition
 
         $node
             ->beforeNormalization()
-                ->always(function ($value) {
-                    // Allow shortcut
-                    if (is_string($value)) {
-                        return ['target' => $value];
-                    }
+            ->always(function ($value) {
+                // Allow shortcut
+                if (is_string($value)) {
+                    return ['target' => $value];
+                }
 
-                    return $value ?? [];
-                })
+                return $value ?? [];
+            })
             ->end()
             ->children()
-                ->scalarNode('target')->end()
-                ->booleanNode('recursive')->defaultTrue()->end()
-                ->scalarNode('hydrator')->defaultNull()->end()
-            ->end()
-        ;
-
-
-        return $node;
-    }
-
-    protected function hydrationSection()
-    {
-        $node = self::createNode('hydration', 'array');
-
-        $node
-            ->children()
-                ->scalarNode('class')->end()
-                ->scalarNode('strategy')->end()
-                ->scalarNode('hydrator')->defaultNull()->end()
+            ->scalarNode('target')->end()
+            ->booleanNode('recursive')->defaultTrue()->end()
+            ->scalarNode('hydrator')->defaultNull()->end()
             ->end()
         ;
 
