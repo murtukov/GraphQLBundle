@@ -155,22 +155,6 @@ abstract class TypeDefinition
         return $node;
     }
 
-    protected function hydrationSection()
-    {
-        $node = self::createNode('hydration', 'array');
-
-        $node
-            ->children()
-                ->scalarNode('class')->end()
-                ->scalarNode('strategy')->end()
-                ->scalarNode('hydrator')->defaultNull()->end()
-            ->end()
-        ;
-
-
-        return $node;
-    }
-
     protected function descriptionSection()
     {
         $node = self::createNode('description', 'scalar');
