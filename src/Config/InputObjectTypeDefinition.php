@@ -14,6 +14,7 @@ class InputObjectTypeDefinition extends TypeDefinition
             ->children()
                 ->append($this->nameSection())
                 ->append($this->validationSection(self::VALIDATION_LEVEL_CLASS))
+                ->append($this->hydrationSection())
                 ->arrayNode('fields')
                     ->useAttributeAsKey('name', false)
                     ->prototype('array')
