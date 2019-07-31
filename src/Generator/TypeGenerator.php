@@ -278,6 +278,13 @@ CODE;
         $resolve = $value['resolve'] ?? false;
         $extraCode = '';
 
+        // Generate the hydrator code
+        if ($key === 'resolve' && $resolve && (false !== strpos($resolve->__toString(), 'hydrated'))) {
+            $compilerNames[] = 'hydrated';
+            $extraCode .= $this->generateHydration();
+        }
+
+        // Generate the validation code
         if ('resolve' === $key && $resolve && (false !== \strpos($resolve->__toString(), 'validator'))) {
             $compilerNames[] = 'validator';
             $mapping = $this->buildValidationMapping($value);
@@ -653,5 +660,32 @@ CODE;
     protected function isCollectionType(string $type): bool
     {
         return 2 === \count(\array_intersect(['[', ']'], \str_split($type)));
+    }
+
+    protected function generateHydration()
+    {
+        return '$hydrated = $globalVariable->get(\'hydrator\')->process($args, $info);' . "\n\n";
+    }
+
+    protected function generateHydrationConfig(array $config)
+    {
+        $config = $config['hydration'] ?? null;
+
+        if (null === $config) return 'null';
+
+        $code = <<<EOF
+[
+<spaces>'class' => '%s',
+<spaces>'recursive' => %s,
+<spaces>'force' => %s
+]
+EOF;
+
+        return sprintf(
+            $code,
+            $config['class'],
+            $this->stringifyValue($config['recursive']),
+            $this->stringifyValue($config['force'])
+        );
     }
 }
