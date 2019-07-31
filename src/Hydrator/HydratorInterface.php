@@ -50,4 +50,3 @@ interface HydratorInterface
 
     function mapNames(): array;
 }
-
