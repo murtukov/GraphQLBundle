@@ -5,69 +5,39 @@ declare(strict_types=1);
 namespace Overblog\GraphQLBundle\Hydrator;
 
 use ArrayObject;
+use Exception;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ListOfType;
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
-use Overblog\GraphQLBundle\Definition\ArgumentInterface;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 
 /**
- * Class Hydrator
+ * Class DefaultHydrator
  *
  * @author Timur Murtukov <murtukov@gmail.com>
  */
-class Hydrator implements HydratorInterface
+class DefaultHydrator implements HydratorInterface
 {
+    use HydratorResolverTrait;
 
     /**
      * @var PropertyAccessorInterface
      */
-    private $propertyAccessor;
+    protected $propertyAccessor;
 
-
-    public function __construct(PropertyAccessorInterface $propertyAccessor)
-    {
-        $this->propertyAccessor = $propertyAccessor;
-    }
-
-    public function process(ArgumentInterface $args, ResolveInfo $info)
-    {
-        $requestedField = $info->parentType->getField($info->fieldName);
-        $hydrated = new Hydrated();
-
-        foreach ($args->getArrayCopy() as $key => $value) {
-            $argType = $requestedField->getArg($key)->getType();
-            $unwrappedType = Type::getNamedType($argType);
-
-            if (Type::isBuiltInType($unwrappedType) || !isset($unwrappedType->config['hydration'])) {
-                continue;
-            }
-
-            if ($argType instanceof ListOfType) {
-                $collection = [];
-                foreach ($value as $item) {
-                    $collection[] = $this->hydrate($unwrappedType, $item);
-                }
-                $value = $collection;
-            } else {
-                $value = $this->hydrate($unwrappedType, $value);
-            }
-
-            $hydrated[$key] = $value;
-        }
-
-        return $hydrated;
-    }
+    /**
+     * @var string
+     */
+    protected $typeName;
 
     /**
      * @param InputObjectType $type
      * @param array           $values
      *
-     * @return mixed
-     * @throws \Exception
+     * @return object
+     * @throws Exception
      */
-    public function hydrate(InputObjectType $type, array $values)
+    final public function hydrate(InputObjectType $type, array $values): object
     {
         $className = $type->config['hydration']['class'] ?? ArrayObject::class;
 
@@ -97,8 +67,43 @@ class Hydrator implements HydratorInterface
         return $object;
     }
 
-    public function mapName($fieldName): string
+    /**
+     * Map GraphQL field names to class properties.
+     *
+     * @param string $fieldName
+     *
+     * @return string Name of a class property
+     */
+    public function mapName(string $fieldName): string
     {
         return $fieldName;
+    }
+
+    /**
+     * Transforms a single value.
+     *
+     * @param string $fieldName
+     * @param        $value
+     *
+     * @return mixed
+     */
+    public function transformValue(string $fieldName, $value)
+    {
+        return $value;
+    }
+
+    /**
+     * @param PropertyAccessorInterface $propertyAccessor
+     *
+     * @return void
+     */
+    final function setPropertyAccessor(PropertyAccessorInterface $propertyAccessor): void
+    {
+        $this->propertyAccessor = $propertyAccessor;
+    }
+
+    final function setTypeName(string $name): void
+    {
+        $this->typeName = $name;
     }
 }
