@@ -661,11 +661,12 @@ CODE;
         return 2 === \count(\array_intersect(['[', ']'], \str_split($type)));
     }
 
-    protected function generateHydration()
-    {
-        return '$hydrated = $globalVariable->get(\'hydrator\')->process($args, $info);' . "\n\n";
-    }
-
+    /**
+     * @param array $config
+     *
+     * @return string
+     * @throws ReflectionException
+     */
     protected function generateHydrationConfig(array $config)
     {
         $config = $config['hydration'] ?? null;
@@ -675,16 +676,16 @@ CODE;
         $code = <<<EOF
 [
 <spaces>'class' => '%s',
+<spaces>'hydrator' => '%s',
 <spaces>'recursive' => %s,
-<spaces>'force' => %s
 ]
 EOF;
 
         return sprintf(
             $code,
             $config['class'],
-            $this->stringifyValue($config['recursive']),
-            $this->stringifyValue($config['force'])
+            $config['hydrator'],
+            $this->stringifyValue($config['recursive'])
         );
     }
 }
