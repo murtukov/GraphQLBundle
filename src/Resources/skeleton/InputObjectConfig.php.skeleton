@@ -2,5 +2,6 @@
 <spaces>'name' => <name>,
 <spaces>'description' => <description>,
 <spaces>'validation' => <classValidation>,
+<spaces>'hydration' => <hydrationConfig>,
 <spaces>'fields' => <inputFields>,
 ]

@@ -277,7 +277,15 @@ CODE;
     protected function generateExtraCode(array $value, string $key, ?string $argDefinitions = null, string $default = 'null', array &$compilerNames = null): string
     {
         $resolve = $value['resolve'] ?? false;
+        $extraCode = "";
 
+        // Generate the hydrator code
+        if ($key === 'resolve' && $resolve && (false !== strpos($resolve->__toString(), 'hydrated'))) {
+            $compilerNames[] = 'hydrated';
+            $extraCode .= $this->generateHydration();
+        }
+
+        // Generate the validation code
         if ('resolve' === $key && $resolve && (false !== \strpos($resolve->__toString(), 'validator'))) {
             $compilerNames[] = 'validator';
             $mapping = $this->buildValidationMapping($value);
@@ -285,7 +293,7 @@ CODE;
             $this->addInternalUseStatement(InputValidator::class);
         }
 
-        return $extraCode ?? '';
+        return $extraCode;
     }
 
     protected function generateValidation(array $rules): string
@@ -468,14 +476,14 @@ EOF;
      *
      *  Arrays are delegated to **$this->stringifyArray()**
      *
-     * @param $value
-     * @param $offset
+     * @param mixed $value
+     * @param int   $offset - array offset
      *
      * @return string|null
      *
      * @throws ReflectionException
      */
-    protected function stringifyValue($value, $offset): string
+    protected function stringifyValue($value, $offset = 0): string
     {
         switch (\gettype($value)) {
             case 'boolean':
@@ -662,5 +670,32 @@ EOF;
     protected function isCollectionType(string $type): bool
     {
         return 2 === \count(\array_intersect(['[', ']'], \str_split($type)));
+    }
+
+    protected function generateHydration()
+    {
+        return '$hydrated = $globalVariable->get(\'hydrator\')->process($args, $info);' . "\n\n";
+    }
+
+    protected function generateHydrationConfig(array $config)
+    {
+        $config = $config['hydration'] ?? null;
+
+        if (null === $config) return 'null';
+
+        $code = <<<EOF
+[
+<spaces>'class' => '%s',
+<spaces>'recursive' => %s,
+<spaces>'force' => %s
+]
+EOF;
+
+        return sprintf(
+            $code,
+            $config['class'],
+            $this->stringifyValue($config['recursive']),
+            $this->stringifyValue($config['force'])
+        );
     }
 }

@@ -11,6 +11,11 @@ use Symfony\Component\Validator\Constraints\Expression;
 use Symfony\Component\Validator\Exception\LogicException;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
+/**
+ * Class ExpressionValidator
+ *
+ * @author Timur Murtukov <murtukov@gmail.com>
+ */
 class ExpressionValidator extends \Symfony\Component\Validator\Constraints\ExpressionValidator
 {
     private $expressionLanguage;
