@@ -40,31 +40,59 @@ class DefaultHydrator implements HydratorInterface
     final public function hydrate(InputObjectType $type, array $values): object
     {
         $className = $type->config['hydration']['class'] ?? ArrayObject::class;
-
         $object = new $className;
 
         foreach ($values as $fieldName => $value) {
-            if ($this->propertyAccessor->isWritable($object, $fieldName)) {
+            $propertyName = $this->mapName($fieldName);
 
-                $childType = $type->getField($fieldName)->getType();
+            // Create property dynamically to allow the
+            // property accessor to write a value.
+            if ($object instanceof ArrayObject) {
+                $object->$propertyName = '';
+            }
 
-                if ($childType instanceof InputObjectType) {
-                    $value = $this->hydrate($childType, $value);
-                } elseif ($childType instanceof ListOfType && Type::getNamedType($childType) instanceof InputObjectType) {
+            if ($this->propertyAccessor->isWritable($object, $propertyName)) {
+                $childType     = $type->getField($fieldName)->getType();
+                $unwrappedType = Type::getNamedType($childType);
+                $isCollection  = $childType instanceof ListOfType;
+
+                // Collection of input objects
+                if ($isCollection && $unwrappedType instanceof InputObjectType) {
+                    $hydrator = $this->getHydratorForType($unwrappedType);
                     $collection = [];
 
                     foreach ($value as $item) {
-                        $collection[] = $this->hydrate(Type::getNamedType($childType), $item);
+                        $collection[] = $hydrator->hydrate($unwrappedType, $item);
                     }
 
                     $value = $collection;
                 }
+                // Single input object
+                elseif ($unwrappedType instanceof InputObjectType) {
+                    $hydrator = $this->getHydratorForType($unwrappedType);
+                    $value = $hydrator->hydrate($unwrappedType, $value);
+                }
 
-                $this->propertyAccessor->setValue($object, $this->mapName($fieldName), $value);
+                $this->propertyAccessor->setValue($object, $propertyName, $this->transformValue($fieldName, $value));
             }
         }
 
         return $object;
+    }
+
+    /**
+     * @param PropertyAccessorInterface $propertyAccessor
+     *
+     * @return void
+     */
+    final function setPropertyAccessor(PropertyAccessorInterface $propertyAccessor): void
+    {
+        $this->propertyAccessor = $propertyAccessor;
+    }
+
+    final function setTypeName(string $name): void
+    {
+        $this->typeName = $name;
     }
 
     /**
@@ -90,20 +118,5 @@ class DefaultHydrator implements HydratorInterface
     public function transformValue(string $fieldName, $value)
     {
         return $value;
-    }
-
-    /**
-     * @param PropertyAccessorInterface $propertyAccessor
-     *
-     * @return void
-     */
-    final function setPropertyAccessor(PropertyAccessorInterface $propertyAccessor): void
-    {
-        $this->propertyAccessor = $propertyAccessor;
-    }
-
-    final function setTypeName(string $name): void
-    {
-        $this->typeName = $name;
     }
 }
