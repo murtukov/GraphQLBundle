@@ -145,9 +145,9 @@ abstract class TypeDefinition
             })
             ->end()
             ->children()
-            ->scalarNode('target')->end()
-            ->booleanNode('recursive')->defaultTrue()->end()
-            ->scalarNode('hydrator')->defaultNull()->end()
+                ->scalarNode('target')->end()
+                ->booleanNode('recursive')->defaultTrue()->end()
+                ->scalarNode('hydrator')->defaultNull()->end()
             ->end()
         ;
 
