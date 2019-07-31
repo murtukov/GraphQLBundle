@@ -279,7 +279,7 @@ CODE;
         $extraCode = '';
 
         // Generate the hydrator code
-        if ($key === 'resolve' && $resolve && (false !== strpos($resolve->__toString(), 'hydrated'))) {
+        if ('resolve' === $key && $resolve && (false !== strpos($resolve->__toString(), 'hydrated'))) {
             $compilerNames[] = 'hydrated';
             $extraCode .= '$hydrated = $globalVariable->get(\'hydrator\')->process($args, $info);' . "\n\n";
         }
@@ -367,6 +367,7 @@ CODE;
 
         return '['.$this->prefixCodeWithSpaces($code, 2, false)."\n<spaces>]";
     }
+
 
     /**
      *  Converts an array into php fragment and adds proper use statements, e.g.:.
@@ -456,7 +457,7 @@ CODE;
      * | NULL     | null           | "null"              |
      * ```
      *
-     *  Arrays are delegated to **$this->stringifyArray()**
+     * Arrays are delegated to **$this->stringifyArray()**
      *
      * @param mixed $value
      * @param int   $offset - array offset
