@@ -101,13 +101,17 @@ services:
     Overblog\GraphQLBundle\Validator\ValidatorFactory:
         arguments:
             - '@?validator'
-            - '@validator.validator_factory'
+            - '@?validator.validator_factory'
             - '@?translator.default'
         tags:
             - { name: overblog_graphql.global_variable, alias: validatorFactory, public: false }
 
-    Overblog\GraphQLBundle\Hydrator\Hydrator:
-        arguments:
-            - '@property_accessor'
+    Overblog\GraphQLBundle\Hydrator\HydrationExecutor:
+        arguments: ['@property_accessor']
         tags:
             - { name: overblog_graphql.global_variable, alias: hydrator, public: false }
+        calls:
+            - ['setHydratorLocator', [!tagged_locator { tag: 'overblog_graphql.hydrator', index_by: 'key' }]]
+
+    Overblog\GraphQLBundle\Hydrator\DefaultHydrator:
+        tags: ['overblog_graphql.hydrator']
