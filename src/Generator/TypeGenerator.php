@@ -13,6 +13,7 @@ use Overblog\GraphQLBundle\Validator\ArgumentsValidator;
 use Overblog\GraphQLGenerator\Generator\TypeGenerator as BaseTypeGenerator;
 use ReflectionException;
 use RuntimeException;
+use function sprintf;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -108,12 +109,12 @@ EOF;
 
     protected function generateClosureUseStatements(array $config): string
     {
-        return \sprintf('use (%s) ', static::USE_FOR_CLOSURES);
+        return sprintf('use (%s) ', static::USE_FOR_CLOSURES);
     }
 
     protected function resolveTypeCode(string $alias): string
     {
-        return  \sprintf('$globalVariable->get(\'typeResolver\')->resolve(%s)', \var_export($alias, true));
+        return  sprintf('$globalVariable->get(\'typeResolver\')->resolve(%s)', \var_export($alias, true));
     }
 
     protected function generatePublic(array $value): string
@@ -131,7 +132,7 @@ function ($fieldName) <closureUseStatements> {
 <spaces>}
 CODE;
 
-        $code = \sprintf($code, $publicCallback);
+        $code = sprintf($code, $publicCallback);
 
         return $code;
     }
@@ -171,7 +172,7 @@ function ($childrenComplexity, $args = []) <closureUseStatements>{
 <spaces>}
 CODE;
 
-        $code = \sprintf($code, $resolveComplexity);
+        $code = sprintf($code, $resolveComplexity);
 
         return $code;
     }
@@ -283,15 +284,23 @@ CODE;
     protected function generateExtraCode(array $value, string $key, ?string $argDefinitions = null, string $default = 'null', array &$compilerNames = null): string
     {
         $resolve = $value['resolve'] ?? false;
+        $extraCode = "";
 
+        // Generate the hydrator code
+        if ($key === 'resolve' && $resolve && (false !== strpos($resolve->__toString(), 'hydrated'))) {
+            $compilerNames[] = 'hydrated';
+            $extraCode .= $this->generateHydration();
+        }
+
+        // Generate the validation code
         if ($key === 'resolve' && $resolve && (false !== strpos($resolve->__toString(), 'validator'))) {
             $compilerNames[] = 'validator';
             $mapping = $this->buildValidationMapping($value);
-            $extraCode = $this->generateValidation($mapping);
+            $extraCode .= $this->generateValidation($mapping);
             $this->addInternalUseStatement(ArgumentsValidator::class);
         }
 
-        return $extraCode ?? "";
+        return $extraCode;
     }
 
     protected function generateValidation(array $rules): string
@@ -467,14 +476,15 @@ EOF;
      * | NULL     | null           | ""                  |
      * ```
      *
-     *  Arrays are delegated to **$this->stringifyArray()**
+     * Arrays are delegated to **$this->stringifyArray()**
      *
-     * @param $value
-     * @param $offset
+     * @param mixed $value
+     * @param int   $offset - array offset
+     *
      * @return string|null
      * @throws ReflectionException
      */
-    protected function stringifyValue($value, $offset): string
+    protected function stringifyValue($value, $offset = 0): string
     {
         switch (gettype($value)) {
             case 'boolean':
@@ -648,5 +658,32 @@ EOF;
     protected function isCollectionType(string $type): bool
     {
         return count(array_intersect(['[', ']'], str_split($type))) === 2;
+    }
+
+    protected function generateHydration()
+    {
+        return '$hydrated = $globalVariable->get(\'hydrator\')->process($args, $info);' . "\n\n";
+    }
+
+    protected function generateHydrationConfig(array $config)
+    {
+        $config = $config['hydration'] ?? null;
+
+        if (null === $config) return 'null';
+
+        $code = <<<EOF
+[
+<spaces>'class' => '%s',
+<spaces>'recursive' => %s,
+<spaces>'force' => %s
+]
+EOF;
+
+        return sprintf(
+            $code,
+            $config['class'],
+            $this->stringifyValue($config['recursive']),
+            $this->stringifyValue($config['force'])
+        );
     }
 }

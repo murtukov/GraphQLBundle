@@ -134,9 +134,20 @@ abstract class TypeDefinition
         $node = self::createNode('hydration', 'array');
 
         $node
+            ->beforeNormalization()
+                ->always(function ($value) {
+                    // Allow shortcut
+                    if (is_string($value)) {
+                        return ['class' => $value];
+                    }
+
+                    return $value ?? [];
+                })
+            ->end()
             ->children()
                 ->scalarNode('class')->end()
-                ->scalarNode('strategy')->end()
+                ->booleanNode('recursive')->defaultTrue()->end()
+                ->booleanNode('force')->defaultFalse()->end()
                 ->scalarNode('hydrator')->defaultNull()->end()
             ->end()
         ;
