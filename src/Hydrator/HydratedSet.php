@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Overblog\GraphQLBundle\Hydrator;
 
-class Hydrated implements \ArrayAccess, \Countable, \Iterator
+class HydratedSet implements \ArrayAccess, \Countable, \Iterator
 {
     private $container = [];
     private $position = 0;

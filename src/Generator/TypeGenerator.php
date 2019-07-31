@@ -282,7 +282,7 @@ CODE;
         // Generate the hydrator code
         if ($key === 'resolve' && $resolve && (false !== strpos($resolve->__toString(), 'hydrated'))) {
             $compilerNames[] = 'hydrated';
-            $extraCode .= $this->generateHydration();
+            $extraCode .= '$hydrated = $globalVariable->get(\'hydrator\')->process($args, $info);' . "\n\n";
         }
 
         // Generate the validation code
@@ -672,11 +672,12 @@ EOF;
         return 2 === \count(\array_intersect(['[', ']'], \str_split($type)));
     }
 
-    protected function generateHydration()
-    {
-        return '$hydrated = $globalVariable->get(\'hydrator\')->process($args, $info);' . "\n\n";
-    }
-
+    /**
+     * @param array $config
+     *
+     * @return string
+     * @throws ReflectionException
+     */
     protected function generateHydrationConfig(array $config)
     {
         $config = $config['hydration'] ?? null;
@@ -686,16 +687,16 @@ EOF;
         $code = <<<EOF
 [
 <spaces>'class' => '%s',
+<spaces>'hydrator' => '%s',
 <spaces>'recursive' => %s,
-<spaces>'force' => %s
 ]
 EOF;
 
         return sprintf(
             $code,
             $config['class'],
-            $this->stringifyValue($config['recursive']),
-            $this->stringifyValue($config['force'])
+            $config['hydrator'],
+            $this->stringifyValue($config['recursive'])
         );
     }
 }

@@ -147,7 +147,6 @@ abstract class TypeDefinition
             ->children()
                 ->scalarNode('class')->end()
                 ->booleanNode('recursive')->defaultTrue()->end()
-                ->booleanNode('force')->defaultFalse()->end()
                 ->scalarNode('hydrator')->defaultNull()->end()
             ->end()
         ;
