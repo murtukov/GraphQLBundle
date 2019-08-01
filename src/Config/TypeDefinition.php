@@ -138,14 +138,14 @@ abstract class TypeDefinition
                 ->always(function ($value) {
                     // Allow shortcut
                     if (is_string($value)) {
-                        return ['class' => $value];
+                        return ['target' => $value];
                     }
 
                     return $value ?? [];
                 })
             ->end()
             ->children()
-                ->scalarNode('class')->end()
+                ->scalarNode('target')->end()
                 ->booleanNode('recursive')->defaultTrue()->end()
                 ->scalarNode('hydrator')->defaultNull()->end()
             ->end()
