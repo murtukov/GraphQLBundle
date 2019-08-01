@@ -682,8 +682,8 @@ EOF;
 
         return sprintf(
             $code,
-            $config['class'],
-            $config['hydrator'],
+            $config['target'] ?? 'null',
+            $config['hydrator'] ?? 'null',
             $this->stringifyValue($config['recursive'])
         );
     }
