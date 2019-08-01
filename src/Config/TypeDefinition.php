@@ -135,14 +135,14 @@ abstract class TypeDefinition
 
         $node
             ->beforeNormalization()
-            ->always(function ($value) {
-                // Allow shortcut
-                if (is_string($value)) {
-                    return ['target' => $value];
-                }
+                ->always(function ($value) {
+                    // Allow shortcut
+                    if (\is_string($value)) {
+                        return ['target' => $value];
+                    }
 
-                return $value ?? [];
-            })
+                    return $value ?? [];
+                })
             ->end()
             ->children()
                 ->scalarNode('target')->end()
