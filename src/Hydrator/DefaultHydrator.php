@@ -39,7 +39,7 @@ class DefaultHydrator implements HydratorInterface
      */
     final public function hydrate(InputObjectType $type, array $values): object
     {
-        $className = $type->config['hydration']['class'] ?? ArrayObject::class;
+        $className = $type->config['hydration']['target'] ?? ArrayObject::class;
         $object = new $className;
 
         foreach ($values as $fieldName => $value) {
