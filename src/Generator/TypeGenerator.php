@@ -680,7 +680,7 @@ CODE;
 
         $code = <<<EOF
 [
-<spaces>'class' => '%s',
+<spaces>'target' => '%s',
 <spaces>'hydrator' => '%s',
 <spaces>'recursive' => %s,
 ]
