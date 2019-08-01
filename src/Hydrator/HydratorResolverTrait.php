@@ -8,6 +8,11 @@ use GraphQL\Type\Definition\Type;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
+/**
+ * Trait HydratorResolverTrait
+ *
+ * @author Timur Murtukov <murtukov@gmail.com>
+ */
 trait HydratorResolverTrait
 {
     /**
