@@ -669,23 +669,6 @@ CODE;
      */
     protected function generateHydrationConfig(array $config)
     {
-        $config = $config['hydration'] ?? null;
-
-        if (null === $config) return 'null';
-
-        $code = <<<EOF
-[
-<spaces>'target' => '%s',
-<spaces>'hydrator' => '%s',
-<spaces>'recursive' => %s,
-]
-EOF;
-
-        return sprintf(
-            $code,
-            $config['target'] ?? 'null',
-            $config['hydrator'] ?? 'null',
-            $this->stringifyValue($config['recursive'])
-        );
+        return $this->stringifyValue($config['hydration'] ?? null, 1);
     }
 }
