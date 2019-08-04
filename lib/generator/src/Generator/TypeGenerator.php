@@ -15,12 +15,12 @@ class TypeGenerator extends AbstractTypeGenerator
 {
     protected function generateOutputFields(array $config): string
     {
-        return  \sprintf(static::CLOSURE_TEMPLATE, '', '', $this->processFromArray($config['fields'], 'OutputField'));
+        return  \sprintf(static::CLOSURE_TEMPLATE, '', '', $this->processFromArray($config['fields'], 'OutputField', 3));
     }
 
     protected function generateInputFields(array $config): string
     {
-        return \sprintf(static::CLOSURE_TEMPLATE, '', '', $this->processFromArray($config['fields'], 'InputField'));
+        return \sprintf(static::CLOSURE_TEMPLATE, '', '', $this->processFromArray($config['fields'], 'InputField', 3));
     }
 
     protected function generateArgs(array $fields): string
@@ -86,22 +86,22 @@ class TypeGenerator extends AbstractTypeGenerator
 
     protected function generateResolve(array $value): string
     {
-        return $this->callableCallbackFromArrayValue($value, 'resolve', '$value, $args, $context, \\GraphQL\\Type\\Definition\\ResolveInfo $info');
+        return $this->callableCallbackFromArrayValue($value, 'resolve', '$value, $args, $context, \GraphQL\Type\Definition\ResolveInfo $info');
     }
 
     protected function generateResolveType(array $value): string
     {
-        return $this->callableCallbackFromArrayValue($value, 'resolveType', '$value, $context, \\GraphQL\\Type\\Definition\\ResolveInfo $info');
+        return $this->callableCallbackFromArrayValue($value, 'resolveType', '$value, $context, \GraphQL\Type\Definition\ResolveInfo $info');
     }
 
     protected function generateIsTypeOf(array $value): string
     {
-        return $this->callableCallbackFromArrayValue($value, 'isTypeOf', '$value, $context, \\GraphQL\\Type\\Definition\\ResolveInfo $info');
+        return $this->callableCallbackFromArrayValue($value, 'isTypeOf', '$value, $context, \GraphQL\Type\Definition\ResolveInfo $info');
     }
 
     protected function generateResolveField(array $value): string
     {
-        return $this->callableCallbackFromArrayValue($value, 'resolveField', '$value, $args, $context, \\GraphQL\\Type\\Definition\\ResolveInfo $info');
+        return $this->callableCallbackFromArrayValue($value, 'resolveField', '$value, $args, $context, \GraphQL\Type\Definition\ResolveInfo $info');
     }
 
     protected function generateComplexity(array $value): string

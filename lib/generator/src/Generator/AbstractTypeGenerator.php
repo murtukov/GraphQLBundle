@@ -25,7 +25,7 @@ use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 abstract class AbstractTypeGenerator extends AbstractClassGenerator
 {
-    public const DEFAULT_CLASS_NAMESPACE = 'Overblog\\CG\\GraphQLGenerator\\__Schema__';
+    public const DEFAULT_CLASS_NAMESPACE = 'Overblog\CG\GraphQLGenerator\__Schema__';
 
     protected const DEFERRED_PLACEHOLDERS = ['useStatement', 'spaces', 'closureUseStatements'];
 
@@ -45,16 +45,16 @@ EOF;
     ];
 
     private const INTERNAL_TYPES = [
-        Type::STRING => '\\GraphQL\\Type\\Definition\\Type::string()',
-        Type::INT => '\\GraphQL\\Type\\Definition\\Type::int()',
-        Type::FLOAT => '\\GraphQL\\Type\\Definition\\Type::float()',
-        Type::BOOLEAN => '\\GraphQL\\Type\\Definition\\Type::boolean()',
-        Type::ID => '\\GraphQL\\Type\\Definition\\Type::id()',
+        Type::STRING => '\GraphQL\Type\Definition\Type::string()',
+        Type::INT => '\GraphQL\Type\Definition\Type::int()',
+        Type::FLOAT => '\GraphQL\Type\Definition\Type::float()',
+        Type::BOOLEAN => '\GraphQL\Type\Definition\Type::boolean()',
+        Type::ID => '\GraphQL\Type\Definition\Type::id()',
     ];
 
     private const WRAPPED_TYPES = [
-        'NonNull' => '\\GraphQL\\Type\\Definition\\Type::nonNull',
-        'ListOf' => '\\GraphQL\\Type\\Definition\\Type::listOf',
+        'NonNull' => '\GraphQL\Type\Definition\Type::nonNull',
+        'ListOf' => '\GraphQL\Type\Definition\Type::listOf',
     ];
 
     private $canManageExpressionLanguage = false;
@@ -192,7 +192,7 @@ EOF;
         }
     }
 
-    protected function processFromArray(array $values, string $templatePrefix)
+    protected function processFromArray(array $values, string $templatePrefix, $indent = 2)
     {
         $code = '';
 
@@ -201,7 +201,7 @@ EOF;
             $code .= "\n".$this->processTemplatePlaceHoldersReplacements($templatePrefix.'Config', $value);
         }
 
-        return '['.$this->prefixCodeWithSpaces($code, 2)."\n<spaces>]";
+        return '['.$this->prefixCodeWithSpaces($code, $indent)."\n<spaces>]";
     }
 
     protected function callableCallbackFromArrayValue(array $value, string $key, ?string $argDefinitions = null, string $default = 'null', array $compilerNames = null)
@@ -257,7 +257,7 @@ EOF;
     {
         $template = \str_replace(' ', '', \ucwords(\str_replace('-', ' ', $config['type']))).'Config';
         $code = $this->processTemplatePlaceHoldersReplacements($template, $config['config']);
-        $code = \ltrim($this->prefixCodeWithSpaces($code, 2));
+        $code = $this->prefixCodeWithSpaces($code, 3);
 
         return $code;
     }

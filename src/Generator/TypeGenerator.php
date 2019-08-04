@@ -298,7 +298,7 @@ CODE;
     protected function generateValidation(array $rules): string
     {
         $code = $this->processTemplatePlaceHoldersReplacements('ValidatorCode', $rules, self::DEFERRED_PLACEHOLDERS);
-        $code = $this->prefixCodeWithSpaces($code, 2);
+        $code = $this->prefixCodeWithSpaces($code, 2, false);
 
         return $code."\n\n<spaces><spaces>";
     }
@@ -365,7 +365,7 @@ CODE;
             $code .= "\n".$this->processTemplatePlaceHoldersReplacements('RulesConfig', [\key($constraint), \current($constraint)]);
         }
 
-        return '['.$this->prefixCodeWithSpaces($code, 2)."\n<spaces>]";
+        return '['.$this->prefixCodeWithSpaces($code, 2, false)."\n<spaces>]";
     }
 
     /**
@@ -386,8 +386,7 @@ CODE;
      * ```.
      *
      * @param array $config
-     * @param int   $offset
-     *
+     * @param int $offset
      * @return string|null
      *
      * @throws ReflectionException
@@ -670,23 +669,6 @@ CODE;
      */
     protected function generateHydrationConfig(array $config)
     {
-        $config = $config['hydration'] ?? null;
-
-        if (null === $config) return 'null';
-
-        $code = <<<EOF
-[
-<spaces>'target' => '%s',
-<spaces>'hydrator' => '%s',
-<spaces>'recursive' => %s,
-]
-EOF;
-
-        return sprintf(
-            $code,
-            $config['target'] ?? 'null',
-            $config['hydrator'] ?? 'null',
-            $this->stringifyValue($config['recursive'])
-        );
+        return $this->stringifyValue($config['hydration'] ?? null, 1);
     }
 }
