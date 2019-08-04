@@ -5,5 +5,5 @@ $validator = new ArgumentsValidator(
 <spaces>[
 <spaces><spaces>'class' => <classValidation>,
 <spaces><spaces>'properties' => <validationMapping>
-]
+<spaces>]
 );

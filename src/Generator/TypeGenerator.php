@@ -158,7 +158,7 @@ CODE;
     protected function generateComplexity(array $value): string
     {
         $resolveComplexity = parent::generateComplexity($value);
-        $resolveComplexity = \ltrim($this->prefixCodeWithSpaces($resolveComplexity));
+        $resolveComplexity = $this->prefixCodeWithSpaces($resolveComplexity);
 
         if ('null' === $resolveComplexity) {
             return $resolveComplexity;
@@ -274,8 +274,8 @@ CODE;
                 continue;
             }
 
-            $field['validation']['isCollection']  = $this->isCollectionType($field['type']);
-            $field['validation']['referenceType'] = trim($field['type'], '[]!');
+            $field['validation']['cascade']['isCollection']  = $this->isCollectionType($field['type']);
+            $field['validation']['cascade']['referenceType'] = trim($field['type'], '[]!');
         }
 
         return parent::generateInputFields($config);
@@ -306,7 +306,7 @@ CODE;
     protected function generateValidation(array $rules): string
     {
         $code = $this->processTemplatePlaceHoldersReplacements('ValidatorCode', $rules, self::DEFERRED_PLACEHOLDERS);
-        $code = \ltrim($this->prefixCodeWithSpaces($code, 2));
+        $code = $this->prefixCodeWithSpaces($code, 2, false);
 
         return $code . "\n\n<spaces><spaces>";
     }
@@ -318,7 +318,7 @@ CODE;
         if(!$config) return 'null';
 
         $code = $this->processTemplatePlaceHoldersReplacements('ValidationConfig', $config, self::DEFERRED_PLACEHOLDERS);
-        $code = \ltrim($this->prefixCodeWithSpaces($code, 2));
+        $code = $this->prefixCodeWithSpaces($code, 2);
 
         return $code;
     }
@@ -326,7 +326,7 @@ CODE;
     protected function generateValidationMapping(array $config): string
     {
         $code = $this->processFromArray($config['properties'], 'MappingEntry');
-        $code = \ltrim($this->prefixCodeWithSpaces($code, 1));
+        $code = $this->prefixCodeWithSpaces($code, 1);
 
         return $code;
     }
@@ -371,7 +371,7 @@ CODE;
             $code .= "\n".$this->processTemplatePlaceHoldersReplacements('RulesConfig', [key($constraint), current($constraint)]);
         }
 
-        return '['.$this->prefixCodeWithSpaces($code, 2)."\n<spaces>]";
+        return '['.$this->prefixCodeWithSpaces($code, 2, false)."\n<spaces>]";
     }
 
     protected function generateRules(array $rules): ?string
@@ -381,18 +381,25 @@ CODE;
 
     /**
      *  Converts an array into php fragment and adds proper use statements, e.g.:
+     *
+     *  Input:
      *  ```
-     *  Input: ['Length', ['min' => 15, 'max' => 25]]
-     *  Output: "[
+     *  ['Length', ['min' => 15, 'max' => 25]]
+     *  ```
+     *  Output:
+     *  ```
+     * "[
      *      new Assert\Length([
      *          'min' => 15,
      *          'max' => 25',
      *      ]),
      *  ]"
-     * ```
+     *  ```
+     *
      *
      * @param array $config
      * @param int $offset
+     *
      * @return string|null
      * @throws ReflectionException
      */
@@ -430,35 +437,22 @@ CODE;
     /**
      * Generates the 'cascade' section of a type definition class.
      * Example:
-     *  [
+     * ``` 
+     *  "[
      *      'groups' => ['group1', 'group2'],
      *      'referenceType' => 'Author',
      *      'isCollection' => true
-     *  ]
-     *
+     *  ]"
+     * ```
+     * 
      * @param $config
      * @return string
      */
     protected function generateCascade($config)
     {
         $config  = $config['validation'] ?? $config;
-        $cascade = $config['cascade'] ?? null;
 
-        if (null === $cascade) {
-            return 'null';
-        }
-
-        $template = <<<EOF
-[
-<spaces><spaces>'groups' => [%s],
-<spaces><spaces>'referenceType' => '%s',
-<spaces><spaces>'isCollection' => %s
-<spaces>],
-EOF;
-
-        $groups = !empty($cascade['groups']) ? sprintf("'%s'", implode("', '", $cascade['groups'])) : '';
-
-        return $cascade ? sprintf($template, $groups, $config['referenceType'], $config['isCollection'] ? 'true' : 'false') : 'null';
+        return $this->stringifyValue($config['cascade'] ?? null, 1);
     }
 
     /**
@@ -473,7 +467,8 @@ EOF;
      * | integer  | 100            | "100"               |
      * | float    | 14.561         | "14.561"            |
      * | string   | "jeanne d'arc" | "'jeanne d\'arc'"   |
-     * | NULL     | null           | ""                  |
+     * | string   | "@null"        | ""                  |
+     * | NULL     | null           | "null"              |
      * ```
      *
      * Arrays are delegated to **$this->stringifyArray()**
@@ -493,9 +488,12 @@ EOF;
             case 'double':
                 return (string) $value;
             case 'string':
+                if ('@null' === $value) {
+                    return "";
+                }
                 return sprintf("'%s'", $this->escapeSingleQuotes($value));
             case 'NULL':
-                return '';
+                return 'null';
             case 'array':
                 return $this->stringifyArray($value, ++$offset);
             default:
@@ -628,8 +626,8 @@ EOF;
             }
 
             $properties[$name] = $arg['validation'];
-            $properties[$name]['isCollection']  = $this->isCollectionType($arg['type']);
-            $properties[$name]['referenceType'] = trim($arg['type'], '[]!');
+            $properties[$name]['cascade']['isCollection']  = $this->isCollectionType($arg['type']);
+            $properties[$name]['cascade']['referenceType'] = trim($arg['type'], '[]!');
         }
 
         // Merge class and field constraints
@@ -668,23 +666,6 @@ EOF;
      */
     protected function generateHydrationConfig(array $config)
     {
-        $config = $config['hydration'] ?? null;
-
-        if (null === $config) return 'null';
-
-        $code = <<<EOF
-[
-<spaces>'target' => '%s',
-<spaces>'hydrator' => '%s',
-<spaces>'recursive' => %s,
-]
-EOF;
-
-        return sprintf(
-            $code,
-            $config['target'] ?? 'null',
-            $config['hydrator'] ?? 'null',
-            $this->stringifyValue($config['recursive'])
-        );
+        return $this->stringifyValue($config['hydration'] ?? null, 1);
     }
 }
