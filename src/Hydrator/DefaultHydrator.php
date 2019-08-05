@@ -31,6 +31,16 @@ class DefaultHydrator implements HydratorInterface
     protected $typeName;
 
     /**
+     * @var array An assotiative array of transformer closures
+     */
+    private $transformers;
+
+    /**
+     * @var array
+     */
+    private $namesMapping;
+
+    /**
      * @param InputObjectType $type
      * @param array           $values
      *
@@ -43,12 +53,13 @@ class DefaultHydrator implements HydratorInterface
         $object = new $className;
 
         foreach ($values as $fieldName => $value) {
-            $propertyName = $this->mapName($fieldName);
+            // Use a mapped name if set
+            $propertyName = $this->namesMapping[$fieldName] ?? $fieldName;
 
-            // Create property dynamically to allow the
-            // property accessor to write a value.
             if ($object instanceof ArrayObject) {
-                $object->$propertyName = '';
+                // Create property dynamically to allow the
+                // property accessor to write a value.
+                $object->$propertyName = null;
             }
 
             if ($this->propertyAccessor->isWritable($object, $propertyName)) {
@@ -73,7 +84,12 @@ class DefaultHydrator implements HydratorInterface
                     $value = $hydrator->hydrate($unwrappedType, $value);
                 }
 
-                $this->propertyAccessor->setValue($object, $propertyName, $this->transformValue($fieldName, $value));
+                $this->propertyAccessor->setValue(
+                    $object,
+                    $propertyName,
+                    // Use a transformer if set
+                    isset($this->transformers[$fieldName]) ? $this->transformers[$fieldName]($value) : $value
+                );
             }
         }
 
@@ -95,6 +111,16 @@ class DefaultHydrator implements HydratorInterface
         $this->typeName = $name;
     }
 
+    final public function setTransformers(): void
+    {
+        $this->transformers = $this->mapTransformers();
+    }
+
+    final public function setNamesMapping(): void
+    {
+        $this->namesMapping = $this->mapNames();
+    }
+
     /**
      * Map GraphQL field names to class properties.
      *
@@ -102,21 +128,18 @@ class DefaultHydrator implements HydratorInterface
      *
      * @return string Name of a class property
      */
-    public function mapName(string $fieldName): string
+    public function set(string $fieldName): string
     {
         return $fieldName;
     }
 
-    /**
-     * Transforms a single value.
-     *
-     * @param string $fieldName
-     * @param        $value
-     *
-     * @return mixed
-     */
-    public function transformValue(string $fieldName, $value)
+    public function mapTransformers(): array
     {
-        return $value;
+        return [];
+    }
+
+    public function mapNames(): array
+    {
+        return [];
     }
 }
