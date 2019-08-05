@@ -40,6 +40,8 @@ trait HydratorResolverTrait
         $hydrator->setPropertyAccessor($this->propertyAccessor);
         $hydrator->setHydratorLocator($this->hydratorLocator);
         $hydrator->setTypeName($type->name);
+        $hydrator->setTransformers();
+        $hydrator->setNamesMapping();
 
         return $hydrator;
     }

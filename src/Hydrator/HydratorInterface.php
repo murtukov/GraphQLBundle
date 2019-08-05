@@ -24,25 +24,6 @@ interface HydratorInterface
     function hydrate(InputObjectType $type, array $values): object;
 
     /**
-     * Map GraphQL field names to class properties.
-     *
-     * @param string $fieldName
-     *
-     * @return string Name of a class property
-     */
-    function mapName(string $fieldName): string;
-
-    /**
-     * Transforms a single value.
-     *
-     * @param string $fieldName
-     * @param        $value
-     *
-     * @return mixed
-     */
-    function transformValue(string $fieldName, $value);
-
-    /**
      * @param PropertyAccessorInterface $propertyAccessor
      *
      * @return mixed
@@ -60,4 +41,12 @@ interface HydratorInterface
      * @param ServiceLocator $hydratorLocator
      */
     function setHydratorLocator(ServiceLocator $hydratorLocator): void;
+
+    function setTransformers(): void;
+
+    function setNamesMapping(): void;
+
+    function mapTransformers(): array;
+
+    function mapNames(): array;
 }
