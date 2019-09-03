@@ -633,8 +633,13 @@ CODE;
             }
 
             $properties[$name] = $arg['validation'];
-            $properties[$name]['isCollection'] = $this->isCollectionType($arg['type']);
-            $properties[$name]['referenceType'] = \trim($arg['type'], '[]!');
+
+            if (empty($arg['validation']['cascade'])) {
+                continue;
+            }
+
+            $properties[$name]['cascade']['isCollection'] = $this->isCollectionType($arg['type']);
+            $properties[$name]['cascade']['referenceType'] = \trim($arg['type'], '[]!');
         }
 
         // Merge class and field constraints
