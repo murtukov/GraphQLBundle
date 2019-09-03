@@ -437,14 +437,14 @@ CODE;
     /**
      * Generates the 'cascade' section of a type definition class.
      * Example:
-     * ``` 
+     * ```
      *  "[
      *      'groups' => ['group1', 'group2'],
      *      'referenceType' => 'Author',
      *      'isCollection' => true
      *  ]"
      * ```
-     * 
+     *
      * @param $config
      * @return string
      */
