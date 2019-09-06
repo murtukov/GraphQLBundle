@@ -12,9 +12,18 @@ class HasAnyRoleTest extends TestCase
 {
     protected function getFunctions()
     {
-        $authorizationChecker = $this->getMockBuilder(AuthorizationCheckerInterface::class)->getMock();
+        $authorizationChecker = parent::getAuthorizationCheckerIsGrantedWithExpectation(
+            'ROLE_ADMIN',
+            $this->any()
+        );
 
         return [new HasAnyRole($authorizationChecker)];
+    }
+
+    public function testEvaluator()
+    {
+        $hasRole = $this->expressionLanguage->evaluate('hasAnyRole(["ROLE_ADMIN", "ROLE_USER"])');
+        $this->assertTrue($hasRole);
     }
 
     public function testHasAnyRole(): void

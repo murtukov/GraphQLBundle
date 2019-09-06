@@ -20,8 +20,7 @@ class TypeGenerator extends BaseTypeGenerator
     public const USE_FOR_CLOSURES = '$globalVariable';
     public const DEFAULT_CONFIG_PROCESSOR = [Processor::class, 'process'];
 
-    private const CONSTRAINTS_USE_STATEMENT = 'Symfony\Component\Validator\Constraints';
-    private const SECURITY_CONSTRAINTS_USE_STATEMENT = 'Symfony\Component\Security\Core\Validator\Constraints';
+    private const CONSTRAINTS_NAMESPACE = 'Symfony\Component\Validator\Constraints';
 
     private static $classMapLoaded = false;
     private $cacheDir;
@@ -359,7 +358,7 @@ CODE;
             return 'null';
         }
 
-        $this->addUseStatement(self::CONSTRAINTS_USE_STATEMENT.' as Assert');
+        $this->addUseStatement(self::CONSTRAINTS_NAMESPACE.' as Assert');
 
         $code = '';
         foreach ($constraints as $key => $constraint) {
@@ -367,11 +366,6 @@ CODE;
         }
 
         return '['.$this->prefixCodeWithSpaces($code, 2, false)."\n<spaces>]";
-    }
-
-    protected function generateRules(array $rules): ?string
-    {
-        return $this->processTemplatePlaceHoldersReplacements('RulesConfig', $rules);
     }
 
     /**
@@ -401,24 +395,18 @@ CODE;
     {
         [$name, $params] = $config;
 
-        // Security constraint
-        if ('UserPassword' === $name) {
-            $FQCN = self::SECURITY_CONSTRAINTS_USE_STATEMENT."\\$name";
-            $prefix = 'SecurityAssert\\';
-            $this->addUseStatement(self::SECURITY_CONSTRAINTS_USE_STATEMENT.' as SecurityAssert');
-        }
         // Custom constraint
-        elseif (false !== \strpos($name, '\\')) {
+        if (false !== \strpos($name, '\\')) {
             $prefix = '';
             $FQCN = \ltrim($name, '\\');
             $array = \explode('\\', $name);
             $name = \end($array);
             $this->addUseStatement($FQCN);
         }
-        // Standart constraint
+        // Built-in constraint
         else {
             $prefix = 'Assert\\';
-            $FQCN = self::CONSTRAINTS_USE_STATEMENT."\\$name";
+            $FQCN = self::CONSTRAINTS_NAMESPACE."\\$name";
         }
 
         if (!\class_exists($FQCN)) {
@@ -440,7 +428,9 @@ CODE;
      * ```
      *
      * @param $config
+     *
      * @return string
+     * @throws ReflectionException
      */
     protected function generateCascade($config)
     {
@@ -489,10 +479,8 @@ CODE;
                 return \sprintf("'%s'", $this->escapeSingleQuotes($value));
             case 'NULL':
                 return 'null';
-            case 'array':
-                return $this->stringifyArray($value, ++$offset);
             default:
-                throw new RuntimeException('Unsupported data type passed to constraint parameters.');
+                return $this->stringifyArray($value, ++$offset);
         }
     }
 
