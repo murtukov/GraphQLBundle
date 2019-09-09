@@ -99,7 +99,6 @@ services:
             - { name: kernel.event_listener, event: graphql.error_formatting, method: onErrorFormatting }
 
     Overblog\GraphQLBundle\Validator\ValidatorFactory:
-        public: false
         arguments:
             - '@?validator'
             - '@?validator.validator_factory'

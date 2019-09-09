@@ -190,7 +190,7 @@ abstract class TypeDefinition
      *
      * @return ArrayNodeDefinition|NodeDefinition
      *
-     *@internal
+     * @internal
      */
     protected static function createNode(string $name, string $type = 'array')
     {
