@@ -63,9 +63,9 @@ class DefaultHydrator implements HydratorInterface
             }
 
             if ($this->propertyAccessor->isWritable($object, $propertyName)) {
-                $childType     = $type->getField($fieldName)->getType();
+                $childType = $type->getField($fieldName)->getType();
                 $unwrappedType = Type::getNamedType($childType);
-                $isCollection  = $childType instanceof ListOfType;
+                $isCollection = Type::getNullableType($childType) instanceof ListOfType;
 
                 // Collection of input objects
                 if ($isCollection && $unwrappedType instanceof InputObjectType) {

@@ -58,13 +58,16 @@ class HydrationExecutor
 
             $hydrator = $this->getHydratorForType($unwrappedType);
 
-            if ($argType instanceof ListOfType) {
+            // Collection of input objects
+            if (Type::getNullableType($argType) instanceof ListOfType) {
                 $collection = [];
                 foreach ($value as $item) {
                     $collection[] = $hydrator->hydrate($unwrappedType, $item);
                 }
                 $value = $collection;
-            } else {
+            }
+            // Single input object
+            else {
                 $value = $hydrator->hydrate($unwrappedType, $value);
             }
 
