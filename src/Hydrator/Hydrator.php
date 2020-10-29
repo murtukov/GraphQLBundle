@@ -15,7 +15,7 @@ use GraphQL\Type\Definition\ListOfType;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
-use Overblog\GraphQLBundle\Config\Parser\AnnotationParser;
+use Overblog\GraphQLBundle\Config\Parser\Annotation\GraphClass;
 use Overblog\GraphQLBundle\Definition\ArgumentInterface;
 use Overblog\GraphQLBundle\Hydrator\Annotation\Field;
 use Overblog\GraphQLBundle\Hydrator\Annotation\Model;
@@ -37,13 +37,25 @@ class Hydrator
         ORM\ManyToMany::class
     ];
 
+    /**
+     * @var array<string, array<string, array>>
+     */
     private static array $annotationCache = [];
+
+    /**
+     * @var array<string, object>
+     */
+    private static array $entityCache = [];
+
+    /**
+     * @var array<string, mixed>
+     */
+    private array $args;
 
     private AnnotationReader $annotationReader;
     private PropertyAccessorInterface $propertyAccessor;
     private EntityManagerInterface $em;
     private ServiceLocator $converters;
-    private array $args;
 
     public function __construct(
         PropertyAccessorInterface $propertyAccessor,
@@ -72,7 +84,7 @@ class Hydrator
 
         $models = new Models();
 
-        foreach ($this->args as $argName => $input) {
+        foreach ($this->args as $argName => $inputValues) {
             /** @var ListOfType|NonNull $argType */
             $argType = $requestedField->getArg($argName)->getType();
 
@@ -83,7 +95,7 @@ class Hydrator
                 continue;
             }
 
-            $models->models[$argName] = $this->hydrateInputType($inputType, $input);
+            $models->models[$argName] = $this->hydrateInputType($inputType, $inputValues);
         }
 
         return $models;
@@ -92,12 +104,11 @@ class Hydrator
     /**
      * @param mixed $inputValues
      *
-     * @return object
-     *
      * @throws ORM\MappingException|ReflectionException|NonUniqueResultException
      */
     private function hydrateInputType(InputObjectType $inputType, $inputValues, object $model = null): object
     {
+        // TODO: maybe this check is redundant
         if (empty($inputType->config['model'])) {
             return $inputValues;
         }
@@ -105,10 +116,8 @@ class Hydrator
         $modelName = null !== $model ? get_class($model) : $inputType->config['model'];
         $modelReflection = new ReflectionClass($modelName);
 
-        $entityAnnotation = $this->annotationReader->getClassAnnotation($modelReflection, Orm\Entity::class);
-
         if (null === $model) {
-            if (null !== $entityAnnotation) {
+            if (null !== $this->annotationReader->getClassAnnotation($modelReflection, Orm\Entity::class)) {
                 $model = $this->getEntityModel($modelName, $inputValues);
             } else {
                 $model = new $modelName();
@@ -213,7 +222,7 @@ class Hydrator
         if (Type::getNullableType($fieldObject->getType()) instanceof ListOfType) {
             $resultValue = $this->hydrateCollectionValue($fieldObject, $fieldValue, $modelName);
         } else {
-            $resultValue = $this->hydrateValue($fieldObject, $fieldValue, $resultValue);
+            $resultValue = $this->hydrateValue($fieldObject, $fieldValue);
         }
 
         return $resultValue;
@@ -251,13 +260,12 @@ class Hydrator
     }
 
     /**
-     * @param string $modelName
-     * @param array $inputValues
-     * @return int|mixed|string|null
+     * @phpstan-param class-string $modelName
+     * @param array<string, mixed> $inputValues
      *
      * @throws ORM\MappingException|NonUniqueResultException|ReflectionException
      */
-    private function getEntityModel(string $modelName, array $inputValues)
+    private function getEntityModel(string $modelName, array $inputValues): object
     {
         $idValue = $this->resolveIdValue($modelName, $inputValues);
 
@@ -386,7 +394,7 @@ class Hydrator
 
     private function readAnnotationMapping(ReflectionClass $reflectionClass): array
     {
-        $reader = AnnotationParser::getAnnotationReader();
+        $reader = GraphClass::getAnnotationReader();
         $properties = $reflectionClass->getProperties();
 
         $mapping = [];

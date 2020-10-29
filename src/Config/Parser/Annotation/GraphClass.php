@@ -75,7 +75,7 @@ class GraphClass extends ReflectionClass
         }
     }
 
-    private static function getAnnotationReader(): AnnotationReader
+    public static function getAnnotationReader(): AnnotationReader
     {
         if (null === self::$annotationReader) {
             if (!class_exists(AnnotationReader::class) ||
