@@ -39,6 +39,7 @@ Proof of Concept
 Documentation
 -------------
 
+- [Introduction]()
 - [Quick start](docs/definitions/quick-start.md)
 - [Installation](docs/index.md)
 - [Definitions](docs/definitions/index.md)
