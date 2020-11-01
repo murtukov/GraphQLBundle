@@ -10,8 +10,11 @@ you can define your GraphQL types in different ways and file formats, such as YA
 (schema definition language).
 
 The core task of this bundle is to generate PHP classes that are compatible with `webonyx/graphql-php`'s [type system](https://webonyx.github.io/graphql-php/type-system/#type-system), 
-since it relies on this library. Whichever config format you choose - YAML, annotations or GraphQL SDL - it will 
-eventually generate PHP classes and add them to Symfony services. 
+since it relies on this library. Whichever format you choose to configure your types - YAML, annotations or GraphQL SDL - 
+they will be eventually used to generate PHP classes, that will be your actuall types. Of course you can also write this
+classes directly, surpassing
+
+> Note: All generated classes are Symfony services.
 
 For example if you want to create an [Object Type](https://webonyx.github.io/graphql-php/type-system/object-types/) `Query` 
 with only 1 field `post`, you could do it with YAML, which is the default type format:
@@ -57,18 +60,19 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
 }
 ```
 `$configProcessor` and `$globalVariables` are special variables passed to each of your generated GraphQL types.
-The `$configProcessor` is ...ADD DESCRIPTION HERE... and the `$globalVariables` is a container to provide necessary data 
-to your GraphQL types, such as references to other types or resolver callbacks. The good thing 
-is, you don't need to worry about these classes, as they are generated automatically (unless explicitely disabled), but
-knowing them will help you understand the general concept of this bundle.
+The `$configProcessor` is ...ADD DESCRIPTION HERE... and the `$globalVariables` is a container that provide necessary 
+services, references to other types or resolver callbacks. The good thing is, you don't need to worry about these 
+classes, as they are generated automatically (unless explicitely disabled), but knowing them will help you understand 
+the general concept of this bundle.
 
 Todo:
 - Expression language in the config
 - Lazy loading
+- Creating types directly
 
 Default folder
 --------------
-All generated classes are stored by default under the directory: 
+All generated classes are stored by default in the Symfony's cache directory: 
 ```
 %kernel.cache_dir%/overblog/graphql-bundle/__definitions__
 ```
@@ -78,7 +82,7 @@ var/cache/{env}/overblog/graphql-bundle/__definitions__
 ```
 where `{env}` is the current enviroment (prod, dev or test).
 
-It is recommended to change this directory to one, that will be committed. Here is an example of how to do it:
+It is recommended to change this directory to the one, that will be committed. Here is an example of how to do it:
 
 - First set the `cache_dir` option:
 ```yaml
