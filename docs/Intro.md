@@ -1,4 +1,4 @@
-Basics
+Introduction
 ======================
 
 This bundle integrates the [`webonyx/graphql-php`](https://github.com/webonyx/graphql-php) library into your Symfony 
@@ -57,8 +57,8 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
 }
 ```
 `$configProcessor` and `$globalVariables` are special variables passed to each of your generated GraphQL types.
-The `$configProcessor` is ...ADD DESCRIPTION HERE... and the `$globalVariables` is a service bag managed by the bundle 
-to provide necessary data to your GraphQL types, such as references to other types or resolver callbacks. The good thing 
+The `$configProcessor` is ...ADD DESCRIPTION HERE... and the `$globalVariables` is a container to provide necessary data 
+to your GraphQL types, such as references to other types or resolver callbacks. The good thing 
 is, you don't need to worry about these classes, as they are generated automatically (unless explicitely disabled), but
 knowing them will help you understand the general concept of this bundle.
 
@@ -104,7 +104,11 @@ composer dump-autoload
 
 Available type formats
 ---------------------
-There are several ways to define your GraphQL types: you can use YAML, Annotations or GraphQL SDL. 
+There are several ways to define your GraphQL types: you can use YAML, Annotations or GraphQL SDL, each of which has
+its pros and cons.
+
+- Write about differences in readability
+- Then write about additional features, that each way has (builders, validation, argument transformer)
 
 
 and since all of them are used to generate
