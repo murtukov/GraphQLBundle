@@ -2,13 +2,16 @@ Basics
 ======================
 
 This bundle integrates the [`webonyx/graphql-php`](https://github.com/webonyx/graphql-php) library into your Symfony 
-app and introduces a number of useful features such as [Validation](), [Access Control](), [Type Inheritance](), [Profiler]() 
-and many others. It allows you to define your GraphQL types in different ways and file formats, such as YAML, 
-PHP Annotations or even XML.
+app, therefore it is essential to get familiar with its [documentation](https://webonyx.github.io/graphql-php/) first. 
 
-The core task of this bundle is to generate GraphQL types compatible with `webonyx/graphql-php`'s [type system](https://webonyx.github.io/graphql-php/type-system/#type-system), 
-since it relies on this library. Whichever format you choose (e.g. YAML, annotations), it will eventually generate
-and load a valid PHP class. 
+GraphQLBundle introduces a number of additional features such as [Validation](), [Access Control](), 
+[Type Inheritance](), [Profiler]() and many others, that are not built into the underlying library. With GraphQLBundle 
+you can define your GraphQL types in different ways and file formats, such as YAML, PHP Annotations or GraphQL SDL 
+(schema definition language).
+
+The core task of this bundle is to generate PHP classes that are compatible with `webonyx/graphql-php`'s [type system](https://webonyx.github.io/graphql-php/type-system/#type-system), 
+since it relies on this library. Whichever config format you choose - YAML, annotations or GraphQL SDL - it will 
+eventually generate PHP classes and add them to Symfony services. 
 
 For example if you want to create an [Object Type](https://webonyx.github.io/graphql-php/type-system/object-types/) `Query` 
 with only 1 field `post`, you could do it with YAML, which is the default type format:
@@ -23,7 +26,7 @@ Query:
                 args:
                     id: Int!
 ```
-...and it will be generated into the following PHP class, that `webonyx/graphql-php` can _understand_:
+...and this config will be used to generate the following PHP class, that `webonyx/graphql-php` can _understand_:
 ```php
 final class QueryType extends ObjectType implements GeneratedTypeInterface
 {
@@ -53,10 +56,15 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
     }
 }
 ```
+`$configProcessor` and `$globalVariables` are special variables passed to each of your generated GraphQL types.
 The `$configProcessor` is ...ADD DESCRIPTION HERE... and the `$globalVariables` is a service bag managed by the bundle 
 to provide necessary data to your GraphQL types, such as references to other types or resolver callbacks. The good thing 
 is, you don't need to worry about these classes, as they are generated automatically (unless explicitely disabled), but
-knowing them
+knowing them will help you understand the general concept of this bundle.
+
+Todo:
+- Expression language in the config
+- Lazy loading
 
 Default folder
 --------------
@@ -96,4 +104,7 @@ composer dump-autoload
 
 Available type formats
 ---------------------
-TODO
+There are several ways to define your GraphQL types: you can use YAML, Annotations or GraphQL SDL. 
+
+
+and since all of them are used to generate
