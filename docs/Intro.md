@@ -10,10 +10,10 @@ you can define your GraphQL types in different ways and file formats, such as YA
 (schema definition language).
 
 The core task of this bundle is to generate PHP classes that are compatible with `webonyx/graphql-php`'s [type system](https://webonyx.github.io/graphql-php/type-system/#type-system), 
-since it relies on this library. Whichever configuration format you choose - YAML, annotations or GraphQL SDL - 
-it will be eventually used to generate PHP classes, that will be your actuall types. Of course, you can also write 
+since it relies on this library. Whichever format you choose to configure your types - YAML, annotations or GraphQL SDL - 
+they will be eventually used to generate PHP classes, that will be your actuall types. Of course, you can also write 
 this PHP classes manually - and it may be required in some cases - but using one of the mentioned formats greatly 
-reduces boilerplate and makes things work more "Symfony way".
+reduces boilerplate.
 
 > Note: All generated classes are Symfony services.
 
@@ -26,9 +26,7 @@ Query:
         fields:
             echo:
                 type: String
-                resolve: "Hello, World!"
-                args:
-                    id: Int
+                resolve: "Hello, World"
 ```
 ...and this config will be used to generate the following PHP class, that `webonyx/graphql-php` can _understand_:
 ```php
@@ -43,15 +41,7 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
             'fields' => fn() => [
                 'post' => [
                     'type' => Type::string(),
-                    'resolve' => function ($value, $args, $context, $info) use ($globalVariables) {
-                        return "Hello, World!";
-                    },
-                    'args' => [
-                        [
-                            'name' => 'id',
-                            'type' => Type::int(),
-                        ],
-                    ],
+                    'resolve' => fn() => "Hello, World!",
                 ],
             ],
         ];
@@ -61,19 +51,29 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
 }
 ```
 `$configProcessor` and `$globalVariables` are special variables passed to each of your generated GraphQL types.
-The `$configProcessor` is ...ADD DESCRIPTION HERE... and the `$globalVariables` is a container that provide necessary 
-services, references to other types or resolver callbacks. The good thing is, you don't need to worry about these 
-classes, as they are generated automatically (unless explicitely disabled), but knowing them will help you understand 
+The `$configProcessor` is [ADD DESCRIPTION HERE] and the `$globalVariables` is a container that provides necessary 
+services, references to other types or user-defined resolver callbacks. The good thing is, you don't need to worry about 
+these classes, as they are generated automatically (unless explicitely disabled), but knowing them will help you understand 
 the general concept of this bundle.
-
-Expression Language
--------------------
-You might have noticed this strange string: `@=resolver('find_post', [args, info])`. This is Expression Language.
 
 Todo:
 - Expression language in the config
 - Lazy loading
 - Creating types directly
+
+Resolvers
+---------
+In the example above our resolver simply returns a hardcoded string:
+```yaml
+resolve: "Hello, World!"
+```
+But in most of the cases this is not enough. We need a way to specify an external resolver function to retrieve data. 
+For this purpose you can use [Expression Language](https://symfony.com/doc/current/components/expression_language.html), 
+for example:
+```yaml
+resolve: "@=res('find_users', [args]"
+```
+
 
 Default folder
 --------------
