@@ -71,9 +71,40 @@ But in most of the cases this is not enough. We need a way to specify an externa
 For this purpose you can use [Expression Language](https://symfony.com/doc/current/components/expression_language.html), 
 for example:
 ```yaml
-resolve: "@=res('find_users', [args]"
+resolve: "@=res('find_users', [args])"
+```
+Expressions always start with `@=` prefix to distinguish them from normal strings. This bundle ships with a number of
+[predefined expression functions](https://github.com/overblog/GraphQLBundle/blob/master/docs/definitions/expression-language.md#contents).
+In this example we are using the function `res` (alias for `resolver`), that was created specially to be used with
+ the `resolve` option and pass to it 2 arguments: a string name of your resolver service and an array of arguments. 
+ `args` is a special variable also [registered by the bundle](https://github.com/overblog/GraphQLBundle/blob/master/docs/definitions/expression-language.md#registered-variables).
+
+Now the generated class will look like this:
+```php
+final class QueryType extends ObjectType implements GeneratedTypeInterface
+{
+    public const NAME = 'Query';
+    
+    public function __construct(ConfigProcessor $configProcessor, GlobalVariables $globalVariables = null)
+    {
+        $configLoader = fn() => [
+            'name' => self::NAME,
+            'fields' => fn() => [
+                'post' => [
+                    'type' => Type::string(),
+                    'resolve' => function ($value, $args, $context, $info) use ($globalVariables) {
+                        return $globalVariables->get('resolverResolver')->resolve(["find_гыукы", [$args]]);	
+                    },
+                ],
+            ],
+        ];
+        $config = $configProcessor->process(LazyConfig::create($configLoader, $globalVariables))->load();
+        parent::__construct($config);
+    }
+}
 ```
 
+Expression Language uses a syntax similar to JavaScript. For more details see the [official documentation](https://symfony.com/doc/current/components/expression_language/syntax.html).
 
 Default folder
 --------------
