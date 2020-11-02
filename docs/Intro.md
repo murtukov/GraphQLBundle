@@ -11,8 +11,9 @@ you can define your GraphQL types in different ways and file formats, such as YA
 
 The core task of this bundle is to generate PHP classes that are compatible with `webonyx/graphql-php`'s [type system](https://webonyx.github.io/graphql-php/type-system/#type-system), 
 since it relies on this library. Whichever format you choose to configure your types - YAML, annotations or GraphQL SDL - 
-they will be eventually used to generate PHP classes, that will be your actuall types. Of course you can also write this
-classes directly, surpassing
+they will be eventually used to generate PHP classes, that will be your actuall types. Of course, you can also write 
+this PHP classes manually - and it may be required in some cases - but using one of the mentioned formats greatly 
+reduces boilerplate.
 
 > Note: All generated classes are Symfony services.
 
