@@ -10,25 +10,25 @@ you can define your GraphQL types in different ways and file formats, such as YA
 (schema definition language).
 
 The core task of this bundle is to generate PHP classes that are compatible with `webonyx/graphql-php`'s [type system](https://webonyx.github.io/graphql-php/type-system/#type-system), 
-since it relies on this library. Whichever format you choose to configure your types - YAML, annotations or GraphQL SDL - 
-they will be eventually used to generate PHP classes, that will be your actuall types. Of course, you can also write 
+since it relies on this library. Whichever configuration format you choose - YAML, annotations or GraphQL SDL - 
+it will be eventually used to generate PHP classes, that will be your actuall types. Of course, you can also write 
 this PHP classes manually - and it may be required in some cases - but using one of the mentioned formats greatly 
-reduces boilerplate.
+reduces boilerplate and makes things work more "Symfony way".
 
 > Note: All generated classes are Symfony services.
 
 For example if you want to create an [Object Type](https://webonyx.github.io/graphql-php/type-system/object-types/) `Query` 
-with only 1 field `post`, you could do it with YAML, which is the default type format:
+with only 1 field `echo`, you could do it with YAML, which is the default type format:
 ```yaml
 Query:
     type: object
     config:
         fields:
-            post:
-                type: Post
-                resolve: "@=resolver('find_post', [args, info, value, context])"
+            echo:
+                type: String
+                resolve: "Hello, World!"
                 args:
-                    id: Int!
+                    id: Int
 ```
 ...and this config will be used to generate the following PHP class, that `webonyx/graphql-php` can _understand_:
 ```php
@@ -42,14 +42,14 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
             'name' => self::NAME,
             'fields' => fn() => [
                 'post' => [
-                    'type' => $globalVariables->get('typeResolver')->resolve('Post'),
+                    'type' => Type::string(),
                     'resolve' => function ($value, $args, $context, $info) use ($globalVariables) {
-                        return $globalVariables->get('resolverResolver')->resolve(["find_post", [$args, $info, $value, $context]]);
+                        return "Hello, World!";
                     },
                     'args' => [
                         [
                             'name' => 'id',
-                            'type' => Type::nonNull(Type::int()),
+                            'type' => Type::int(),
                         ],
                     ],
                 ],
@@ -65,6 +65,10 @@ The `$configProcessor` is ...ADD DESCRIPTION HERE... and the `$globalVariables` 
 services, references to other types or resolver callbacks. The good thing is, you don't need to worry about these 
 classes, as they are generated automatically (unless explicitely disabled), but knowing them will help you understand 
 the general concept of this bundle.
+
+Expression Language
+-------------------
+You might have noticed this strange string: `@=resolver('find_post', [args, info])`. This is Expression Language.
 
 Todo:
 - Expression language in the config
