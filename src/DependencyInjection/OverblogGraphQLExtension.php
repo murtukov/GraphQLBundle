@@ -89,7 +89,6 @@ class OverblogGraphQLExtension extends Extension
         $loader->load('expression_language_functions.yaml');
         $loader->load('definition_config_processors.yaml');
         $loader->load('aliases.yaml');
-        $loader->load('profiler.yaml');
     }
 
     private function registerForAutoconfiguration(ContainerBuilder $container): void
