@@ -34,9 +34,9 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
 {
     public const NAME = 'Query';
     
-    public function __construct(ConfigProcessor $configProcessor, GlobalVariables $globalVariables = null)
+    public function __construct(ConfigProcessor $configProcessor, GraphQLServices $services)
     {
-        $configLoader = fn() => [
+        $config = [
             'name' => self::NAME,
             'fields' => fn() => [
                 'post' => [
@@ -45,8 +45,8 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
                 ],
             ],
         ];
-        $config = $configProcessor->process(LazyConfig::create($configLoader, $globalVariables))->load();
-        parent::__construct($config);
+
+        parent::__construct($configProcessor->process($config));
     }
 }
 ```
