@@ -6,14 +6,14 @@ app, therefore it is essential to get familiar with its [documentation](https://
 
 GraphQLBundle introduces a number of additional features such as [Validation](), [Access Control](), 
 [Type Inheritance](), [Profiler]() and many others, that are not built into the underlying library. With GraphQLBundle 
-you can define your GraphQL types in different ways and file formats, such as YAML, PHP Annotations or GraphQL SDL 
+you can define your GraphQL types in different ways and file formats, such as YAML, PHP Annotations/Attributes or GraphQL SDL 
 (schema definition language).
 
 The core task of this bundle is to generate PHP classes that are compatible with `webonyx/graphql-php`'s [type system](https://webonyx.github.io/graphql-php/type-system/#type-system), 
-since it relies on this library. Whichever format you choose to configure your types - YAML, annotations or GraphQL SDL - 
-they will be eventually used to generate PHP classes, that will be your actuall types. Of course, you can also write 
-this PHP classes manually - and it may be required in some cases - but using one of the mentioned formats greatly 
-reduces boilerplate.
+since it relies on this library. Whichever format you choose to configure your types - YAML, annotations, attributes or 
+GraphQL SDL - they will be eventually used to generate PHP classes, that will be your actuall types. Of course, you can 
+also write this PHP classes manually - and it may be required in some cases - but using one of the mentioned formats 
+greatly reduces boilerplate.
 
 > Note: All generated classes are Symfony services.
 
@@ -34,7 +34,7 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
 {
     public const NAME = 'Query';
     
-    public function __construct(ConfigProcessor $configProcessor, GraphQLServices $services)
+    public function __construct(GraphQLServices $services)
     {
         $config = [
             'name' => self::NAME,
@@ -46,12 +46,11 @@ final class QueryType extends ObjectType implements GeneratedTypeInterface
             ],
         ];
 
-        parent::__construct($configProcessor->process($config));
+        parent::__construct($services->processConfig($config));
     }
 }
 ```
-`$configProcessor` and `$globalVariables` are special variables passed to each of your generated GraphQL types.
-The `$configProcessor` is [ADD DESCRIPTION HERE] and the `$globalVariables` is a container that provides necessary 
+`$services` is a special variable passed to each of your generated GraphQL types. It is a container that provides necessary 
 services, references to other types or user-defined resolver callbacks. The good thing is, you don't need to worry about 
 these classes, as they are generated automatically (unless explicitely disabled), but knowing them will help you understand 
 the general concept of this bundle.
@@ -71,13 +70,13 @@ But in most of the cases this is not enough. We need a way to specify an externa
 For this purpose you can use [Expression Language](https://symfony.com/doc/current/components/expression_language.html), 
 for example:
 ```yaml
-resolve: "@=res('find_users', [args])"
+resolve: "@=query('find_users', args)"
 ```
 Expressions always start with `@=` prefix to distinguish them from normal strings. This bundle ships with a number of
 [predefined expression functions](https://github.com/overblog/GraphQLBundle/blob/master/docs/definitions/expression-language.md#contents).
-In this example we are using the function `res` (alias for `resolver`), that was created specially to be used with
- the `resolve` option and pass to it 2 arguments: a string name of your resolver service and an array of arguments. 
- `args` is a special variable also [registered by the bundle](https://github.com/overblog/GraphQLBundle/blob/master/docs/definitions/expression-language.md#registered-variables).
+In this example we are using the function `query`, that was created specially to be used with the `resolve` option and 
+we pass to it 2 parameters: a string alias of your resolver service and request arguments. `args` is a special variable 
+also [registered by the bundle](https://github.com/overblog/GraphQLBundle/blob/master/docs/definitions/expression-language.md#registered-variables).
 
 Now the generated class will look like this:
 ```php
