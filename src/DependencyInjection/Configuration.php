@@ -57,7 +57,6 @@ class Configuration implements ConfigurationInterface
                 ->append($this->servicesSection())
                 ->append($this->securitySection())
                 ->append($this->doctrineSection())
-                ->append($this->profilerSection())
             ->end();
 
         return $treeBuilder;
@@ -305,24 +304,6 @@ class Configuration implements ConfigurationInterface
                     ->defaultValue([])
                     ->prototype('scalar')->end()
                 ->end()
-            ->end()
-        ;
-
-        return $node;
-    }
-
-    private function profilerSection(): ArrayNodeDefinition
-    {
-        $builder = new TreeBuilder('profiler');
-
-        /** @var ArrayNodeDefinition $node */
-        $node = $builder->getRootNode();
-
-        // @phpstan-ignore-next-line
-        $node
-            ->addDefaultsIfNotSet()
-            ->children()
-                ->scalarNode('query_match')->defaultNull()->end()
             ->end()
         ;
 

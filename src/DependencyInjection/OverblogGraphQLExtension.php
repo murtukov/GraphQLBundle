@@ -54,7 +54,6 @@ class OverblogGraphQLExtension extends Extension
         $this->setConfigBuilders($config, $container);
         $this->setDebugListener($config, $container);
         $this->setDefinitionParameters($config, $container);
-        $this->setProfilerParameters($config, $container);
         $this->setClassLoaderListener($config, $container);
         $this->setCompilerCacheWarmer($config, $container);
         $this->registerForAutoconfiguration($container);
@@ -160,11 +159,6 @@ class OverblogGraphQLExtension extends Extension
         $container->setParameter($this->getAlias().'.cache_dir_permissions', $config['definitions']['cache_dir_permissions']);
         $container->setParameter($this->getAlias().'.argument_class', $config['definitions']['argument_class']);
         $container->setParameter($this->getAlias().'.use_experimental_executor', $config['definitions']['use_experimental_executor']);
-    }
-
-    private function setProfilerParameters(array $config, ContainerBuilder $container): void
-    {
-        $container->setParameter($this->getAlias().'.profiler.query_match', $config['profiler']['query_match']);
     }
 
     private function setBatchingMethod(array $config, ContainerBuilder $container): void
