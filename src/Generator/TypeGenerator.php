@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Overblog\GraphQLBundle\Generator;
 
 use Composer\Autoload\ClassLoader;
-use Overblog\GraphQLBundle\Config\Processor;
 use Overblog\GraphQLBundle\Event\SchemaCompiledEvent;
+use Overblog\GraphQLBundle\Generator\Processor\GeneratorProcessor;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use function array_merge;
@@ -28,8 +29,8 @@ class TypeGenerator
     public const GRAPHQL_SERVICES = 'services';
 
     private static bool $classMapLoaded = false;
-    private ?string $cacheDir;
-    protected int $cacheDirMask;
+    private ?string $targetDir;
+    protected int $targetDirMask;
     private array $configs;
     private bool $useClassMap;
     private ?string $baseCacheDir;
@@ -37,30 +38,34 @@ class TypeGenerator
     private TypeBuilder $typeBuilder;
     private EventDispatcherInterface $eventDispatcher;
 
+    /**
+     * @var iterable<GeneratorProcessor>
+     */
+    private iterable $processors;
+
     public function __construct(
-        string $classNamespace,
-        ?string $cacheDir,
-        array $configs,
+        ParameterBagInterface $params,
         TypeBuilder $typeBuilder,
         EventDispatcherInterface $eventDispatcher,
-        bool $useClassMap = true,
-        ?string $baseCacheDir = null,
-        ?int $cacheDirMask = null
+        iterable $processors
     ) {
-        $this->cacheDir = $cacheDir;
-        $this->configs = $configs;
-        $this->useClassMap = $useClassMap;
-        $this->baseCacheDir = $baseCacheDir;
         $this->typeBuilder = $typeBuilder;
         $this->eventDispatcher = $eventDispatcher;
-        $this->classNamespace = $classNamespace;
+        $this->processors = $processors;
 
-        if (null === $cacheDirMask) {
+        $this->targetDir = $params->get('overblog_graphql.cache_dir');
+        $this->configs = $params->get('overblog_graphql_types.config');
+        $this->useClassMap = $params->get('overblog_graphql.use_classloader_listener');
+        $this->baseCacheDir = $params->get('kernel.cache_dir');
+        $this->classNamespace = $params->get('overblog_graphql.class_namespace');
+        $targetDirMask = $params->get('overblog_graphql.cache_dir_permissions');
+
+        if (null === $targetDirMask) {
             // Apply permission 0777 for default cache dir otherwise apply 0775.
-            $cacheDirMask = null === $cacheDir ? 0777 : 0775;
+            $targetDirMask = null === $this->targetDir ? 0777 : 0775;
         }
 
-        $this->cacheDirMask = $cacheDirMask;
+        $this->targetDirMask = $targetDirMask;
     }
 
     public function getBaseCacheDir(): ?string
@@ -73,25 +78,35 @@ class TypeGenerator
         $this->baseCacheDir = $baseCacheDir;
     }
 
-    public function getCacheDir(bool $useDefault = true): ?string
+    public function getTargetDir(): ?string
     {
-        if ($useDefault) {
-            return $this->cacheDir ?: $this->baseCacheDir.'/overblog/graphql-bundle/__definitions__';
-        } else {
-            return $this->cacheDir;
-        }
+        return (null !== $this->targetDir)
+            ? $this->targetDir
+            : $this->baseCacheDir.'/overblog/graphql-bundle/__definitions__';
     }
 
-    public function setCacheDir(?string $cacheDir): self
+    public function setTargetDir(?string $targetDir): self
     {
-        $this->cacheDir = $cacheDir;
+        $this->targetDir = $targetDir;
 
         return $this;
     }
 
+    /**
+     * Perform configuration preprocessing.
+     */
+    private function processConfig(array $config): array
+    {
+        foreach ($this->processors as $processor) {
+            $config = $processor->process($config);
+        }
+
+        return $config;
+    }
+
     public function compile(int $mode): array
     {
-        $cacheDir = $this->getCacheDir();
+        $cacheDir = $this->getTargetDir();
         $writeMode = $mode & self::MODE_WRITE;
 
         // Configure write mode
@@ -100,12 +115,9 @@ class TypeGenerator
             $fs->remove($cacheDir);
         }
 
-        // Process configs
-        $configs = Processor::process($this->configs);
-
         // Generate classes
         $classes = [];
-        foreach ($configs as $name => $config) {
+        foreach ($this->processConfig($this->configs) as $name => $config) {
             $config['config']['name'] ??= $name;
             $config['config']['class_name'] = $config['class_name'];
             $classMap = $this->generateClass($config, $cacheDir, $mode);
@@ -140,7 +152,7 @@ class TypeGenerator
 
             if ($mode & self::MODE_WRITE) {
                 if (($mode & self::MODE_OVERRIDE) || !file_exists($path)) {
-                    $phpFile->save($path);
+                    $phpFile->save($path, $this->targetDirMask);
                 }
             }
         }
@@ -173,6 +185,6 @@ class TypeGenerator
 
     private function getClassesMap(): string
     {
-        return $this->getCacheDir().'/__classes.map';
+        return $this->getTargetDir().'/__classes.map';
     }
 }

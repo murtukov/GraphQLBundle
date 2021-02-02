@@ -13,6 +13,6 @@ final class TypeGenerator extends BaseTypeGenerator
      */
     public function getCacheDirMask()
     {
-        return $this->cacheDirMask;
+        return $this->targetDirMask;
     }
 }

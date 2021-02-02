@@ -60,14 +60,10 @@ services:
 
     Overblog\GraphQLBundle\Generator\TypeGenerator:
         arguments:
-            - "%overblog_graphql.class_namespace%"
-            - "%overblog_graphql.cache_dir%"
-            - "%overblog_graphql_types.config%"
+            - '@parameter_bag'
             - '@Overblog\GraphQLBundle\Generator\TypeBuilder'
             - '@Symfony\Contracts\EventDispatcher\EventDispatcherInterface'
-            - "%overblog_graphql.use_classloader_listener%"
-            - "%kernel.cache_dir%"
-            - "%overblog_graphql.cache_dir_permissions%"
+            - !tagged_iterator 'overblog_graphql.generator_processor'
 
     Overblog\GraphQLBundle\Definition\ArgumentFactory:
         arguments:
@@ -100,13 +96,8 @@ services:
         tags:
             - { name: overblog_graphql.service, alias: security, public: false }
 
-    Overblog\GraphQLBundle\Generator\Converter\ExpressionConverter:
-        arguments:
-            - '@Overblog\GraphQLBundle\ExpressionLanguage\ExpressionLanguage'
-
     Overblog\GraphQLBundle\Generator\TypeBuilder:
         arguments:
-            - '@Overblog\GraphQLBundle\Generator\Converter\ExpressionConverter'
             - '%overblog_graphql.class_namespace%'
 
     Overblog\GraphQLBundle\Validator\InputValidatorFactory:
@@ -116,3 +107,9 @@ services:
             - '@?translator.default'
         tags:
             - { name: overblog_graphql.service, alias: input_validator_factory, public: false }
+
+    Overblog\GraphQLBundle\Generator\Processor\ExpressionProcessor:
+        arguments:
+            - '@Overblog\GraphQLBundle\ExpressionLanguage\ExpressionLanguage'
+        tags:
+            - overblog_graphql.generator_processor

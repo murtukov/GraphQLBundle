@@ -14,8 +14,7 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\UnionType;
 use Murtukov\PHPCodeGenerator\ArrowFunction;
 use Murtukov\PHPCodeGenerator\Closure;
-use Murtukov\PHPCodeGenerator\Config;
-use Murtukov\PHPCodeGenerator\ConverterInterface;
+use Murtukov\PHPCodeGenerator\Collection;
 use Murtukov\PHPCodeGenerator\GeneratorInterface;
 use Murtukov\PHPCodeGenerator\Instance;
 use Murtukov\PHPCodeGenerator\Literal;
@@ -26,8 +25,7 @@ use Overblog\GraphQLBundle\Definition\GraphQLServices;
 use Overblog\GraphQLBundle\Definition\Type\CustomScalarType;
 use Overblog\GraphQLBundle\Definition\Type\GeneratedTypeInterface;
 use Overblog\GraphQLBundle\Error\ResolveErrors;
-use Overblog\GraphQLBundle\ExpressionLanguage\ExpressionLanguage as EL;
-use Overblog\GraphQLBundle\Generator\Converter\ExpressionConverter;
+use Overblog\GraphQLBundle\ExpressionLanguage\Expression;
 use Overblog\GraphQLBundle\Generator\Exception\GeneratorException;
 use Overblog\GraphQLBundle\Validator\InputValidator;
 use function array_map;
@@ -73,7 +71,6 @@ class TypeBuilder
         'custom-scalar' => CustomScalarType::class,
     ];
 
-    protected ExpressionConverter $expressionConverter;
     protected PhpFile $file;
     protected string $namespace;
     protected array $config;
@@ -81,13 +78,9 @@ class TypeBuilder
     protected string $currentField;
     protected string $gqlServices = '$'.TypeGenerator::GRAPHQL_SERVICES;
 
-    public function __construct(ExpressionConverter $expressionConverter, string $namespace)
+    public function __construct(string $namespace)
     {
-        $this->expressionConverter = $expressionConverter;
         $this->namespace = $namespace;
-
-        // Register additional converter in the php code generator
-        Config::registerConverter($expressionConverter, ConverterInterface::TYPE_STRING);
     }
 
     /**
@@ -335,7 +328,7 @@ class TypeBuilder
         // only by custom-scalar types
         if ('custom-scalar' === $this->type) {
             if (isset($c->scalarType)) {
-                $configLoader->addItem('scalarType', $c->scalarType);
+                $configLoader->addItem('scalarType', new Literal((string) $c->scalarType));
             }
 
             if (isset($c->serialize)) {
@@ -444,15 +437,15 @@ class TypeBuilder
         }
 
         // TODO: before creating an input validator, check if any validation rules are defined
-        if (EL::isStringWithTrigger($resolve)) {
+        if ($resolve instanceof Expression) {
             $closure = Closure::new()
                 ->addArguments('value', 'args', 'context', 'info')
                 ->bindVar(TypeGenerator::GRAPHQL_SERVICES);
 
-            $injectValidator = EL::expressionContainsVar('validator', $resolve);
+            $injectValidator = $resolve->containsVar('validator');
 
             if ($this->configContainsValidation()) {
-                $injectErrors = EL::expressionContainsVar('errors', $resolve);
+                $injectErrors = $resolve->containsVar('errors');
 
                 if ($injectErrors) {
                     $closure->append('$errors = ', Instance::new(ResolveErrors::class));
@@ -482,7 +475,7 @@ class TypeBuilder
                 throw new GeneratorException('Unable to inject an instance of the InputValidator. No validation constraints provided. Please remove the "validator" argument from the list of dependencies of your resolver or provide validation configs.');
             }
 
-            $closure->append('return ', $this->expressionConverter->convert($resolve));
+            $closure->append('return ', (string) $resolve);
 
             return $closure;
         }
@@ -725,7 +718,7 @@ class TypeBuilder
             $field->addItem('access', $this->buildAccess($c->access));
         }
 
-        if (!empty($c->access) && is_string($c->access) && EL::expressionContainsVar('object', $c->access)) {
+        if (isset($c->access) && $c->access instanceof Expression && $c->access->containsVar('object')) {
             $field->addItem('useStrictAccess', false);
         }
 
@@ -805,22 +798,20 @@ class TypeBuilder
      */
     protected function buildComplexity($complexity)
     {
-        if (EL::isStringWithTrigger($complexity)) {
-            $expression = $this->expressionConverter->convert($complexity);
-
-            if (EL::expressionContainsVar('args', $complexity)) {
+        if ($complexity instanceof Expression) {
+            if ($complexity->containsVar('args')) {
                 return Closure::new()
                     ->addArgument('childrenComplexity')
                     ->addArgument('arguments', '', [])
                     ->bindVar(TypeGenerator::GRAPHQL_SERVICES)
                     ->append('$args = ', "$this->gqlServices->get('argumentFactory')->create(\$arguments)")
-                    ->append('return ', $expression)
+                    ->append('return ', (string) $complexity)
                 ;
             }
 
-            $arrow = ArrowFunction::new(is_string($expression) ? new Literal($expression) : $expression);
+            $arrow = ArrowFunction::new($complexity);
 
-            if (EL::expressionContainsVar('childrenComplexity', $complexity)) {
+            if ($complexity->containsVar('childrenComplexity')) {
                 $arrow->addArgument('childrenComplexity');
             }
 
@@ -844,20 +835,19 @@ class TypeBuilder
      */
     protected function buildPublic($public)
     {
-        if (EL::isStringWithTrigger($public)) {
-            $expression = $this->expressionConverter->convert($public);
-            $arrow = ArrowFunction::new(Literal::new($expression));
+        if ($public instanceof Expression) {
+            $func = ArrowFunction::new(Literal::new((string) $public));
 
-            if (EL::expressionContainsVar('fieldName', $public)) {
-                $arrow->addArgument('fieldName');
+            if ($public->containsVar('fieldName')) {
+                $func->addArgument('fieldName');
             }
 
-            if (EL::expressionContainsVar('typeName', $public)) {
-                $arrow->addArgument('fieldName');
-                $arrow->addArgument('typeName', '', new Literal('self::NAME'));
+            if ($public->containsVar('typeName')) {
+                $func->addArgument('fieldName');
+                $func->addArgument('typeName', '', new Literal('self::NAME'));
             }
 
-            return $arrow;
+            return $func;
         }
 
         return $public;
@@ -877,12 +867,10 @@ class TypeBuilder
      */
     protected function buildAccess($access)
     {
-        if (EL::isStringWithTrigger($access)) {
-            $expression = $this->expressionConverter->convert($access);
-
+        if ($access instanceof Expression) {
             return ArrowFunction::new()
                 ->addArguments('value', 'args', 'context', 'info', 'object')
-                ->setExpression(Literal::new($expression));
+                ->setExpression(Literal::new((string) $access));
         }
 
         return $access;
@@ -902,12 +890,10 @@ class TypeBuilder
      */
     protected function buildResolveType($resolveType)
     {
-        if (EL::isStringWithTrigger($resolveType)) {
-            $expression = $this->expressionConverter->convert($resolveType);
-
+        if ($resolveType instanceof Expression) {
             return ArrowFunction::new()
                 ->addArguments('value', 'context', 'info')
-                ->setExpression(Literal::new($expression));
+                ->setExpression(Literal::new((string) $resolveType));
         }
 
         return $resolveType;

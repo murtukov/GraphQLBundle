@@ -32,7 +32,7 @@ class CompileCommandTest extends TestCase
             ->compile(TypeGenerator::MODE_MAPPING_ONLY);
 
         // @phpstan-ignore-next-line
-        $this->cacheDir = static::$kernel->getContainer()->get('overblog_graphql.cache_compiler')->getCacheDir();
+        $this->cacheDir = static::$kernel->getContainer()->get('overblog_graphql.cache_compiler')->getTargetDir();
         $this->commandTester = new CommandTester($command);
     }
 

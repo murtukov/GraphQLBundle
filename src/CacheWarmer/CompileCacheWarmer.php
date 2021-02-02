@@ -38,7 +38,7 @@ class CompileCacheWarmer implements CacheWarmerInterface
         if ($this->compiled) {
             // use warm up cache dir if type generator cache dir not already explicitly declare
             $baseCacheDir = $this->typeGenerator->getBaseCacheDir();
-            if (null === $this->typeGenerator->getCacheDir(false)) {
+            if (null === $this->typeGenerator->getTargetDir()) {
                 $this->typeGenerator->setBaseCacheDir($cacheDir);
             }
             $this->typeGenerator->compile(TypeGenerator::MODE_WRITE | TypeGenerator::MODE_OVERRIDE);
