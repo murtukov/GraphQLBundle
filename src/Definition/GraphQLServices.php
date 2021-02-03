@@ -96,4 +96,9 @@ final class GraphQLServices
             new ResolverArgs($value, $args, $context, $info)
         );
     }
+
+    public function callResolver(string $link, ...$args)
+    {
+
+    }
 }

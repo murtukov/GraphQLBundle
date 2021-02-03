@@ -28,6 +28,8 @@ use Overblog\GraphQLBundle\Error\ResolveErrors;
 use Overblog\GraphQLBundle\ExpressionLanguage\Expression;
 use Overblog\GraphQLBundle\Generator\Event\BuildEvent;
 use Overblog\GraphQLBundle\Generator\Exception\GeneratorException;
+use Overblog\GraphQLBundle\Resolver\ArgumentsGuesser;
+use Overblog\GraphQLBundle\Validator\Generator\TypeBuilder as ValidatorTypeBuilder;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use function array_map;
 use function count;
@@ -72,11 +74,17 @@ class TypeBuilder
     protected string $gqlServices = '$'.TypeGenerator::GRAPHQL_SERVICES;
     protected EventDispatcher $eventDispatcher;
     protected BuildEvent $buildEvent;
+    protected ArgumentsGuesser $guesser;
 
-    public function __construct(string $namespace, EventDispatcher $eventDispatcher, \Overblog\GraphQLBundle\Validator\Generator\TypeBuilder $valBuilder)
-    {
+    public function __construct(
+        string $namespace,
+        EventDispatcher $eventDispatcher,
+        ArgumentsGuesser $guesser,
+        ValidatorTypeBuilder $valBuilder // temporary
+    ) {
         $this->namespace = $namespace;
         $this->eventDispatcher = $eventDispatcher;
+        $this->guesser = $guesser;
         $this->buildEvent = new BuildEvent();
 
         // TODO: move this to compiler pass
@@ -489,6 +497,14 @@ class TypeBuilder
         }
 
         return ArrowFunction::new($resolve);
+    }
+
+    protected function buildResolver(string $link)
+    {
+        // Определить кол-во и порядок аргументов
+
+
+        return "\$service->callResolver($link, ...$args)";
     }
 
     /**
