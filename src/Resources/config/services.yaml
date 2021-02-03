@@ -99,6 +99,8 @@ services:
     Overblog\GraphQLBundle\Generator\TypeBuilder:
         arguments:
             - '%overblog_graphql.class_namespace%'
+            - '@event_dispatcher'
+            - '@Overblog\GraphQLBundle\Validator\Generator\TypeBuilder'
 
     Overblog\GraphQLBundle\Validator\InputValidatorFactory:
         arguments:
@@ -113,3 +115,7 @@ services:
             - '@Overblog\GraphQLBundle\ExpressionLanguage\ExpressionLanguage'
         tags:
             - overblog_graphql.generator_processor
+
+    Overblog\GraphQLBundle\Validator\Generator\TypeBuilder:
+        arguments:
+            - '@event_dispatcher'

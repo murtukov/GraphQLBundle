@@ -71,6 +71,7 @@ abstract class TypeWithOutputFieldsDefinition extends TypeDefinition
                 ->variableNode('resolve')
                     ->info('Value resolver (expression language can be used here)')
                 ->end()
+                ->variableNode('resolver')->end()
                 ->append($this->descriptionSection())
                 ->append($this->deprecationReasonSection())
                 ->variableNode('access')

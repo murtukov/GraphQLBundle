@@ -11,7 +11,8 @@ Mutation:
                 complexity: 1
                 public: true
                 type: Boolean
-                resolve: "@=mut('no_validation')"
+#                resolve: "@=mut('no_validation')"
+                resolver: Overblog\GraphQLBundle\Tests\Functional\App\Mutation\InputValidatorMutation::noValidation
                 args:
                     username:
                         type: String!
