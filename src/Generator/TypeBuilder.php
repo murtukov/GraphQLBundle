@@ -502,9 +502,9 @@ class TypeBuilder
     protected function buildResolver(string $link)
     {
         // Определить кол-во и порядок аргументов
+        $args = $this->guesser->guess($link);
 
-
-        return "\$service->callResolver($link, ...$args)";
+        return "\$service->callResolver($link, $args)";
     }
 
     /**

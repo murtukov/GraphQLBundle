@@ -12,7 +12,7 @@ use function is_string;
 use function strpos;
 use function substr;
 
-final class ExpressionProcessor
+final class ExpressionProcessor implements GeneratorProcessor
 {
     private ExpressionLanguage $expressionLanguage;
 
@@ -21,7 +21,7 @@ final class ExpressionProcessor
         $this->expressionLanguage = $expressionLanguage;
     }
 
-    public function process(array $configs): array
+    public function process(array $config): array
     {
         return array_map(function ($v) {
             if (is_array($v)) {
@@ -31,6 +31,6 @@ final class ExpressionProcessor
             }
 
             return $v;
-        }, $configs);
+        }, $config);
     }
 }
