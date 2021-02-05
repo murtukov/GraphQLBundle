@@ -12,7 +12,7 @@ use function is_array;
 use function is_callable;
 use function method_exists;
 
-class ArgumentsGuesser
+class ArgumentsMapper
 {
     private array $knownNames = ['args', 'info', 'context', 'value'];
 
@@ -35,7 +35,7 @@ class ArgumentsGuesser
      *
      * @throws Exception
      */
-    public function guess($link, string $prefix = '$'): array
+    public function print($link, string $prefix = '$'): array
     {
         $reflection = $this->resolveMethodReflection($link);
         $parameters = $reflection->getParameters();

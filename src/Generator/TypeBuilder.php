@@ -28,7 +28,7 @@ use Overblog\GraphQLBundle\Error\ResolveErrors;
 use Overblog\GraphQLBundle\ExpressionLanguage\Expression;
 use Overblog\GraphQLBundle\Generator\Event\BuildEvent;
 use Overblog\GraphQLBundle\Generator\Exception\GeneratorException;
-use Overblog\GraphQLBundle\Resolver\ArgumentsGuesser;
+use Overblog\GraphQLBundle\Resolver\ArgumentsMapper;
 use Overblog\GraphQLBundle\Validator\Generator\TypeBuilder as ValidatorTypeBuilder;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use function array_map;
@@ -74,21 +74,26 @@ class TypeBuilder
     protected string $gqlServices = '$'.TypeGenerator::GRAPHQL_SERVICES;
     protected EventDispatcher $eventDispatcher;
     protected BuildEvent $buildEvent;
-    protected ArgumentsGuesser $guesser;
+    protected ArgumentsMapper $argMapper;
 
     public function __construct(
         string $namespace,
         EventDispatcher $eventDispatcher,
-        ArgumentsGuesser $guesser,
+        ArgumentsMapper $argMapper,
         ValidatorTypeBuilder $valBuilder // temporary
     ) {
         $this->namespace = $namespace;
         $this->eventDispatcher = $eventDispatcher;
-        $this->guesser = $guesser;
+        $this->argMapper = $argMapper;
         $this->buildEvent = new BuildEvent();
 
         // TODO: move this to compiler pass
         $valBuilder->listen();
+    }
+
+    public function dispatch(string $eventName, $data)
+    {
+        $this->eventDispatcher->dispatch($this->buildEvent->setData($data), $eventName);
     }
 
     /**
@@ -116,11 +121,7 @@ class TypeBuilder
         $this->config = $config;
         $this->type = $type;
 
-        $this->file = PhpFile::new();
-
-        $this->eventDispatcher->dispatch($this->buildEvent->setData($this->file), BuildEvent::FILE_BUILD_START);
-
-        $this->file->setNamespace($this->namespace);
+        $this->file = PhpFile::new()->setNamespace($this->namespace);
 
         $class = $this->file->createClass($config['class_name'])
             ->setFinal()
@@ -129,7 +130,6 @@ class TypeBuilder
             ->addConst('NAME', $config['name'])
             ->setDocBlock(static::DOCBLOCK_TEXT);
 
-        $this->eventDispatcher->dispatch($this->buildEvent->setData($class), BuildEvent::CLASS_BUILD_END);
 
         $class->emptyLine();
 
@@ -140,7 +140,7 @@ class TypeBuilder
             ->emptyLine()
             ->append('parent::__construct($configProcessor->process($config))');
 
-        $this->eventDispatcher->dispatch($this->buildEvent->setData($this->file), BuildEvent::FILE_BUILD_END);
+        $this->dispatch(BuildEvent::FILE_BUILD_END, $this->file);
 
         return $this->file;
     }
@@ -171,8 +171,6 @@ class TypeBuilder
             // for performance reasons
             return ArrowFunction::new($type);
         }
-
-        $this->eventDispatcher->dispatch($this->buildEvent->setData($type), BuildEvent::TYPE_BUILD_END);
 
         return $type;
     }
@@ -502,7 +500,7 @@ class TypeBuilder
     protected function buildResolver(string $link)
     {
         // Определить кол-во и порядок аргументов
-        $args = $this->guesser->guess($link);
+        $args = $this->argMapper->print($link);
 
         return "\$service->callResolver($link, $args)";
     }
